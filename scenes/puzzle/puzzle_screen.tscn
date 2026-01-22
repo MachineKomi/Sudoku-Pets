@@ -15,7 +15,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.85, 0.8, 0.9, 1)
+color = Color(0.18, 0.16, 0.22, 1)
 
 [node name="CenterContainer" type="CenterContainer" parent="."]
 layout_mode = 1
@@ -69,7 +69,7 @@ text = "💎 13"
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.8, 0, 1)
 theme_override_font_sizes/font_size = 20
-text = "🪙 16000"
+text = "🪙 100"
 
 [node name="AddButton" type="Button" parent="CenterContainer/MainVBox/TopBar/CurrencyBox"]
 custom_minimum_size = Vector2(30, 30)
@@ -156,26 +156,22 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -150.0
-offset_top = -180.0
+offset_left = -140.0
+offset_top = -160.0
 grow_horizontal = 0
 grow_vertical = 0
 
-[node name="PetSprite" type="Label" parent="PetCompanion"]
+[node name="PetSprite" type="TextureRect" parent="PetCompanion"]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -50.0
-offset_top = -50.0
-offset_right = 50.0
-offset_bottom = 50.0
-theme_override_font_sizes/font_size = 64
-text = "🐱"
-horizontal_alignment = 1
-vertical_alignment = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 30.0
+offset_right = -10.0
+offset_bottom = -10.0
+expand_mode = 1
+stretch_mode = 5
 
 [node name="SpeechBubble" type="PanelContainer" parent="PetCompanion"]
 visible = false
@@ -184,13 +180,13 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -80.0
-offset_top = -70.0
+offset_top = -10.0
 offset_right = 80.0
-offset_bottom = -20.0
+offset_bottom = 35.0
 
 [node name="SpeechText" type="Label" parent="PetCompanion/SpeechBubble"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 12
 text = "You can do it!"
 horizontal_alignment = 1
 autowrap_mode = 2
@@ -201,7 +197,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0, 0, 0, 0.7)
+color = Color(0, 0, 0, 0.8)
 
 [node name="WinPanel" type="PanelContainer" parent="WinPopup"]
 layout_mode = 1

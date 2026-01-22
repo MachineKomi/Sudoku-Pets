@@ -272,3 +272,94 @@ User feedback after testing:
 ---
 
 *New sessions will be appended below*
+
+
+---
+
+### Session 6 - Sprite Integration (Claude)
+
+### Date: 2026-01-22
+
+### Context
+User generated and saved gem sprites (gem_1.png through gem_9.png) and pet sprites (cat, bunny, owl, etc.) but they weren't appearing in the game UI.
+
+### Root Cause
+The code was still using text/emoji instead of loading the actual texture files.
+
+### Fixes Applied
+
+**1. sudoku_board.gd - Complete Rewrite for Sprites**
+- Added `_preload_gem_textures()` to load all gem PNGs at startup
+- Changed cell structure from Button to Control with:
+  - Panel (background)
+  - TextureRect (gem sprite display)
+  - Label (notes display)
+  - Button (invisible click area)
+- Gem sprites now display using TextureRect with STRETCH_KEEP_ASPECT_CENTERED
+- Added fallback to colored text if sprite fails to load
+
+**2. puzzle_screen.tscn - Pet Companion Update**
+- Changed PetSprite from Label (emoji) to TextureRect
+- Adjusted positioning and sizing
+
+**3. puzzle_screen.gd - Pet Sprite Loading**
+- Added `_setup_pet_companion()` function
+- Loads random pet sprite from available pets
+- Added PET_SPRITES constant with paths to pet images
+
+**4. pet_screen.gd - Already Had Sprite Support**
+- Verified PET_DB dictionary has correct sprite paths
+- Collection grid uses TextureRect for pet display
+
+### Files Modified
+- `scenes/puzzle/sudoku_board.gd` - Major rewrite for TextureRect sprites
+- `scenes/puzzle/puzzle_screen.tscn` - PetSprite changed to TextureRect
+- `scenes/puzzle/puzzle_screen.gd` - Added pet sprite loading
+
+### Sprite Files Verified
+Gems: `assets/sprites/gems/gem_1.png` through `gem_9.png`
+Pets: `assets/sprites/pets/` - cat, bunny, owl, panda, ninetailfoxkami, babycopperdragon, phoenixcat, cosmicowl
+
+---
+
+*New sessions will be appended below*
+
+
+---
+
+### Session 7 - Sprite Display Verification (Claude/Kiro)
+
+### Date: 2026-01-22
+
+### Context
+Continuing from context transfer. User reported sprites were saved but not appearing in UI.
+
+### Investigation
+1. Verified gem sprites exist: `assets/sprites/gems/gem_1.png` through `gem_9.png` ✓
+2. Verified pet sprites exist: `assets/sprites/pets/*.png` ✓
+3. All sprites have `.import` files (Godot has imported them) ✓
+4. Ran game - console shows "Loaded gem texture: res://assets/sprites/gems/gem_X.png" for all 9 ✓
+
+### Fixes Applied
+1. **Improved TextureRect configuration in `_create_cell()`**:
+   - Added explicit anchor settings instead of preset
+   - Increased padding from 4px to 8px for better visual spacing
+   - Added `container.size` explicit setting
+   - Added detailed docstring explaining cell structure
+
+2. **Improved `_update_cell()` sprite handling**:
+   - Added `sprite.show()` call to ensure visibility
+   - Improved modulate values (0.9 instead of 0.85 for given cells)
+   - Better comments explaining texture index calculation
+
+### Verification
+- Game runs without errors (Exit code 0 in headless mode)
+- Console confirms all 9 gem textures load successfully
+- No GDScript diagnostics errors
+
+### Status
+Sprites should now be displaying correctly. User needs to visually verify in-game.
+
+---
+
+*New sessions will be appended below*

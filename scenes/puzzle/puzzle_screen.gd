@@ -40,8 +40,17 @@ const NUMBER_COLORS: Array[Color] = [
 @onready var heart_container: HBoxContainer = $CenterContainer/MainVBox/TopBar/HeartContainer
 
 # Pet companion - bottom right corner
+@onready var pet_sprite: TextureRect = $PetCompanion/PetSprite
 @onready var pet_speech: PanelContainer = $PetCompanion/SpeechBubble
 @onready var speech_text: Label = $PetCompanion/SpeechBubble/SpeechText
+
+# Available pet sprites for companion
+const PET_SPRITES: Array[String] = [
+	"res://assets/sprites/pets/cat.png",
+	"res://assets/sprites/pets/bunny.png",
+	"res://assets/sprites/pets/owl.png",
+	"res://assets/sprites/pets/panda.png",
+]
 
 # Win/Lose popup
 @onready var win_popup: ColorRect = $WinPopup
@@ -68,6 +77,7 @@ var _number_buttons: Array[Button] = []
 
 func _ready() -> void:
 	_setup_number_pad()
+	_setup_pet_companion()
 	_update_ui()
 	_update_lives_ui()
 	
@@ -81,6 +91,14 @@ func _ready() -> void:
 	board.puzzle_completed.connect(_on_puzzle_completed)
 	
 	_show_pet_message("Let's solve this puzzle!")
+
+
+func _setup_pet_companion() -> void:
+	"""Load a random pet sprite for the companion"""
+	if pet_sprite and not PET_SPRITES.is_empty():
+		var random_path: String = PET_SPRITES[randi() % PET_SPRITES.size()]
+		if ResourceLoader.exists(random_path):
+			pet_sprite.texture = load(random_path)
 
 
 func _process(delta: float) -> void:
