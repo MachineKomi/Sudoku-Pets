@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3 uid="uid://sudoku_board"]
+
+[ext_resource type="Script" path="res://scenes/puzzle/sudoku_board.gd" id="1_board"]
+
+[node name="SudokuBoard" type="Control"]
+custom_minimum_size = Vector2(360, 360)
+layout_mode = 2
+script = ExtResource("1_board")
+
+[node name="GridContainer" type="GridContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/h_separation = 2
+theme_override_constants/v_separation = 2
+columns = 4

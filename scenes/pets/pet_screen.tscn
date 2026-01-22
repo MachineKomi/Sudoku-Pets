@@ -1,0 +1,117 @@
+[gd_scene load_steps=2 format=3 uid="uid://pet_screen"]
+
+[ext_resource type="Script" path="res://scenes/pets/pet_screen.gd" id="1_pets"]
+
+[node name="PetScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_pets")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.85, 0.8, 0.9, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="MainVBox" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="TopBar" type="HBoxContainer" parent="CenterContainer/MainVBox"]
+custom_minimum_size = Vector2(600, 50)
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="CenterContainer/MainVBox/TopBar"]
+custom_minimum_size = Vector2(80, 40)
+layout_mode = 2
+text = "← Back"
+
+[node name="Spacer" type="Control" parent="CenterContainer/MainVBox/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Title" type="Label" parent="CenterContainer/MainVBox/TopBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "🐱 My Pets"
+
+[node name="Spacer2" type="Control" parent="CenterContainer/MainVBox/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="GoldLabel" type="Label" parent="CenterContainer/MainVBox/TopBar"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "🪙 100"
+
+[node name="ContentHBox" type="HBoxContainer" parent="CenterContainer/MainVBox"]
+layout_mode = 2
+theme_override_constants/separation = 40
+
+[node name="GachaPanel" type="PanelContainer" parent="CenterContainer/MainVBox/ContentHBox"]
+custom_minimum_size = Vector2(280, 400)
+layout_mode = 2
+
+[node name="GachaVBox" type="VBoxContainer" parent="CenterContainer/MainVBox/ContentHBox/GachaPanel"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="GachaTitle" type="Label" parent="CenterContainer/MainVBox/ContentHBox/GachaPanel/GachaVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "🎰 Gacha Machine"
+horizontal_alignment = 1
+
+[node name="GachaMachine" type="Label" parent="CenterContainer/MainVBox/ContentHBox/GachaPanel/GachaVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 80
+text = "🎱"
+horizontal_alignment = 1
+
+[node name="PullButton" type="Button" parent="CenterContainer/MainVBox/ContentHBox/GachaPanel/GachaVBox"]
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 20
+text = "Pull! (100 🪙)"
+
+[node name="ResultLabel" type="Label" parent="CenterContainer/MainVBox/ContentHBox/GachaPanel/GachaVBox"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = ""
+horizontal_alignment = 1
+
+[node name="CollectionPanel" type="PanelContainer" parent="CenterContainer/MainVBox/ContentHBox"]
+custom_minimum_size = Vector2(280, 400)
+layout_mode = 2
+
+[node name="CollectionVBox" type="VBoxContainer" parent="CenterContainer/MainVBox/ContentHBox/CollectionPanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="CollectionTitle" type="Label" parent="CenterContainer/MainVBox/ContentHBox/CollectionPanel/CollectionVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "📦 Collection"
+horizontal_alignment = 1
+
+[node name="PetGrid" type="GridContainer" parent="CenterContainer/MainVBox/ContentHBox/CollectionPanel/CollectionVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+columns = 4
+
+[connection signal="pressed" from="CenterContainer/MainVBox/TopBar/BackButton" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="CenterContainer/MainVBox/ContentHBox/GachaPanel/GachaVBox/PullButton" to="." method="_on_pull_pressed"]

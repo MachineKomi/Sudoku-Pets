@@ -1,0 +1,19 @@
+SCRIPT ERROR: Invalid assignment of property or key 'theme_override_font_sizes' with value of type 'Dictionary' on a base object of type 'Button'.
+          at: _setup_number_pad (res://scenes/puzzle/puzzle_screen.gd:37)
+          GDScript backtrace (most recent call first):
+              [0] _setup_number_pad (res://scenes/puzzle/puzzle_screen.gd:37)
+              [1] _ready (res://scenes/puzzle/puzzle_screen.gd:23)
+SCRIPT ERROR: Invalid assignment of property or key 'theme_override_font_sizes' with value of type 'Dictionary' on a base object of type 'Button'.
+          at: _setup_number_pad (res://scenes/puzzle/puzzle_screen.gd:37)
+          GDScript backtrace (most recent call first):
+              [0] _setup_number_pad (res://scenes/puzzle/puzzle_screen.gd:37)
+              [1] _ready (res://scenes/puzzle/puzzle_screen.gd:23)
+WARNING: 2 RIDs of type "CanvasItem" were leaked.
+     at: _free_rids (servers/rendering/renderer_canvas_cull.cpp:2678)
+ERROR: 6 RID allocations of type 'N10RendererRD14TextureStorage7TextureE' were leaked at exit.
+WARNING: 6 RIDs of type "Texture" were leaked.
+     at: finalize (servers/rendering/rendering_device.cpp:7191)
+ERROR: 4 RID allocations of type 'PN18TextServerAdvanced22ShapedTextDataAdvancedE' were leaked at exit.
+ERROR: 1 RID allocations of type 'PN18TextServerAdvanced12FontAdvancedE' were leaked at exit.
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+     at: cleanup (core/object/object.cpp:2514)

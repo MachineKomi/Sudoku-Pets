@@ -1,0 +1,104 @@
+[gd_scene load_steps=2 format=3 uid="uid://main_menu"]
+
+[ext_resource type="Script" path="res://scenes/main/main_menu.gd" id="1_main"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_main")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.85, 0.8, 0.9, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="ContentPanel" type="PanelContainer" parent="CenterContainer"]
+custom_minimum_size = Vector2(400, 500)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer/ContentPanel"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="Spacer1" type="Control" parent="CenterContainer/ContentPanel/VBox"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="Title" type="Label" parent="CenterContainer/ContentPanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "🧩 Sudoku Pets"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="CenterContainer/ContentPanel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.5, 0.45, 0.55, 1)
+text = "Solve puzzles, collect pets!"
+horizontal_alignment = 1
+
+[node name="Spacer2" type="Control" parent="CenterContainer/ContentPanel/VBox"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="PlayButton" type="Button" parent="CenterContainer/ContentPanel/VBox"]
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+size_flags_horizontal = 4
+focus_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "▶  Play"
+
+[node name="PetsButton" type="Button" parent="CenterContainer/ContentPanel/VBox"]
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+size_flags_horizontal = 4
+focus_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "🐱  My Pets"
+
+[node name="SettingsButton" type="Button" parent="CenterContainer/ContentPanel/VBox"]
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+size_flags_horizontal = 4
+focus_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "⚙  Settings"
+
+[node name="Spacer3" type="Control" parent="CenterContainer/ContentPanel/VBox"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="PlayerInfo" type="HBoxContainer" parent="CenterContainer/ContentPanel/VBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="GoldLabel" type="Label" parent="CenterContainer/ContentPanel/VBox/PlayerInfo"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "🪙 100"
+
+[node name="Spacer" type="Control" parent="CenterContainer/ContentPanel/VBox/PlayerInfo"]
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+
+[node name="LevelLabel" type="Label" parent="CenterContainer/ContentPanel/VBox/PlayerInfo"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "⭐ Level 1"
+
+[connection signal="pressed" from="CenterContainer/ContentPanel/VBox/PlayButton" to="." method="_on_play_pressed"]
+[connection signal="pressed" from="CenterContainer/ContentPanel/VBox/PetsButton" to="." method="_on_pets_pressed"]
+[connection signal="pressed" from="CenterContainer/ContentPanel/VBox/SettingsButton" to="." method="_on_settings_pressed"]
