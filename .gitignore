@@ -38,3 +38,7 @@ Thumbs.db
 
 # Test coverage
 coverage/
+
+# Godot log files
+godot_error.log
+godot_output.log

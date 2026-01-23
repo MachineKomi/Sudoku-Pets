@@ -25,7 +25,7 @@
 | Godot Executable | `C:\Godot_451_20251015\Godot_v4.5.1-stable_win64.exe\Godot_v4.5.1-stable_win64.exe` |
 | Project Path | `sudoku-pets/` |
 | Viewport | 1280x720, centered, aspect "keep" |
-| GitHub Repo | `Sudoku_Pets` (to be created) |
+| GitHub Repo | `https://github.com/MachineKomi/Sudoku-Pets` |
 
 ### Running the Game
 ```powershell
@@ -57,13 +57,18 @@ sudoku-pets/
 ├── README.md                  # Player-facing info
 ├── icon.svg                   # App icon
 │
-├── aidlc-docs/                # Design documentation
-│   ├── aidlc-state.md        # Current dev status
-│   ├── audit.md              # Decision log
-│   ├── HANDOFF_SUMMARY.md    # Context for new developers
-│   └── inception/
-│       ├── requirements/     # What to build
-│       └── game-design/      # Full GDD
+├── docs/                      # ALL documentation (consolidated)
+│   ├── design/               # Technical design docs
+│   │   ├── sudoku_pets_components.md  # Component model
+│   │   └── domain_models/    # DDD domain models
+│   ├── requirements/         # What to build
+│   │   ├── user_stories.md   # User stories
+│   │   ├── gdd.md            # Game Design Document
+│   │   └── ui-spec.md        # UI/UX specification
+│   ├── plans/                # Implementation plans
+│   └── status/               # Progress tracking
+│       ├── aidlc-state.md    # Current dev status
+│       └── HANDOFF_SUMMARY.md # Context for new devs
 │
 ├── HUMAN_TODO/                # Tasks for humans (art, etc.)
 │   └── [date]_[task].md      # Dated task files
@@ -75,17 +80,22 @@ sudoku-pets/
 │
 ├── scripts/
 │   ├── autoload/             # Singletons (NO class_name!)
-│   ├── puzzle/               # Sudoku logic
-│   └── resources/            # Data classes (PetData, etc.)
+│   ├── domain/               # EventBus, domain events
+│   ├── puzzle/               # Sudoku logic, events
+│   ├── progression/          # XP, Gold, leveling
+│   ├── pets/                 # Pet system, gacha
+│   ├── settings/             # Game settings, dialogue
+│   ├── resources/            # Data classes (PetData, etc.)
+│   └── demo/                 # Demo scripts for testing
 │
 ├── resources/                 # .tres files
 │   └── config/               # Theme, settings
 │
 ├── assets/                    # Art, audio (mostly TODO)
-│   ├── sprites/
-│   └── audio/
+│   └── sprites/
 │
 └── test/                      # GUT tests
+    └── unit/                 # Unit tests
 ```
 
 ---
