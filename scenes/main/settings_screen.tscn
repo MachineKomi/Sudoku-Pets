@@ -1,0 +1,95 @@
+[gd_scene load_steps=2 format=3 uid="uid://settings_screen"]
+
+[ext_resource type="Script" path="res://scenes/main/settings_screen.gd" id="1_script"]
+
+[node name="SettingsScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_script")
+
+[node name="Dimmer" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.5)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Panel" type="PanelContainer" parent="CenterContainer"]
+custom_minimum_size = Vector2(400, 350)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "⚙️ Settings"
+horizontal_alignment = 1
+
+[node name="MusicRow" type="HBoxContainer" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+
+[node name="MusicLabel" type="Label" parent="CenterContainer/Panel/VBox/MusicRow"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+text = "🎵 Music"
+
+[node name="MusicSlider" type="HSlider" parent="CenterContainer/Panel/VBox/MusicRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 100.0
+value = 80.0
+
+[node name="SFXRow" type="HBoxContainer" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+
+[node name="SFXLabel" type="Label" parent="CenterContainer/Panel/VBox/SFXRow"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+text = "🔊 SFX"
+
+[node name="SFXSlider" type="HSlider" parent="CenterContainer/Panel/VBox/SFXRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 100.0
+value = 100.0
+
+[node name="ThemeRow" type="HBoxContainer" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="ThemeButton" type="Button" parent="CenterContainer/Panel/VBox/ThemeRow"]
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+text = "🎨 Theme: Normal"
+
+[node name="BreezyRow" type="HBoxContainer" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+
+[node name="BreezyLabel" type="Label" parent="CenterContainer/Panel/VBox/BreezyRow"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+text = "🌴 Breezy Mode"
+
+[node name="BreezyToggle" type="CheckButton" parent="CenterContainer/Panel/VBox/BreezyRow"]
+layout_mode = 2
+
+[node name="CloseButton" type="Button" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+text = "✕ Close"
+
+[connection signal="value_changed" from="CenterContainer/Panel/VBox/MusicRow/MusicSlider" to="." method="_on_music_slider_value_changed"]
+[connection signal="value_changed" from="CenterContainer/Panel/VBox/SFXRow/SFXSlider" to="." method="_on_sfx_slider_value_changed"]
+[connection signal="pressed" from="CenterContainer/Panel/VBox/ThemeRow/ThemeButton" to="." method="_on_theme_button_pressed"]
+[connection signal="toggled" from="CenterContainer/Panel/VBox/BreezyRow/BreezyToggle" to="." method="_on_breezy_toggle_toggled"]
+[connection signal="pressed" from="CenterContainer/Panel/VBox/CloseButton" to="." method="_on_close_pressed"]

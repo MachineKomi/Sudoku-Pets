@@ -26,5 +26,5 @@ func _on_pets_pressed() -> void:
 
 
 func _on_settings_pressed() -> void:
-	# TODO: Settings popup
-	pass
+	var settings_scene := preload("res://scenes/main/settings_screen.tscn").instantiate()
+	add_child(settings_scene)
