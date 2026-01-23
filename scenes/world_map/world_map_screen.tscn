@@ -1,0 +1,112 @@
+[gd_scene load_steps=2 format=3 uid="uid://worldmap_screen"]
+
+[ext_resource type="Script" path="res://scenes/world_map/world_map_screen.gd" id="1_script"]
+
+[node name="WorldMapScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.15, 0.15, 0.2, 1)
+
+[node name="Header" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 60.0
+grow_horizontal = 2
+
+[node name="BackButton" type="Button" parent="Header"]
+layout_mode = 2
+text = "← Back"
+
+[node name="Spacer" type="Control" parent="Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StarsLabel" type="Label" parent="Header"]
+layout_mode = 2
+text = "⭐ 0"
+
+[node name="GoldLabel" type="Label" parent="Header"]
+layout_mode = 2
+text = "🪙 100"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 60.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+
+[node name="LevelPathContainer" type="VBoxContainer" parent="ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="LevelPopup" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -120.0
+offset_right = 150.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="LevelPopup"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="TitleLabel" type="Label" parent="LevelPopup/VBox"]
+layout_mode = 2
+text = "Level 1"
+horizontal_alignment = 1
+
+[node name="StarsLabel" type="Label" parent="LevelPopup/VBox"]
+layout_mode = 2
+text = "Best: ☆☆☆"
+horizontal_alignment = 1
+
+[node name="BestTimeLabel" type="Label" parent="LevelPopup/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="ButtonsRow" type="HBoxContainer" parent="LevelPopup/VBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="PlayNormalButton" type="Button" parent="LevelPopup/VBox/ButtonsRow"]
+layout_mode = 2
+text = "▶ Normal"
+
+[node name="PlayHardButton" type="Button" parent="LevelPopup/VBox/ButtonsRow"]
+layout_mode = 2
+text = "🔥 Hard"
+
+[node name="CloseButton" type="Button" parent="LevelPopup/VBox"]
+layout_mode = 2
+text = "✕ Close"
+
+[connection signal="pressed" from="Header/BackButton" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="LevelPopup/VBox/ButtonsRow/PlayNormalButton" to="." method="_on_play_normal_pressed"]
+[connection signal="pressed" from="LevelPopup/VBox/ButtonsRow/PlayHardButton" to="." method="_on_play_hard_pressed"]
+[connection signal="pressed" from="LevelPopup/VBox/CloseButton" to="." method="_on_close_popup_pressed"]

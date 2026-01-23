@@ -17,8 +17,8 @@ func _update_player_info() -> void:
 
 
 func _on_play_pressed() -> void:
-	print("Play button pressed")
-	get_tree().change_scene_to_file("res://scenes/puzzle/puzzle_screen.tscn")
+	print("Play button pressed - navigating to World Map")
+	get_tree().change_scene_to_file("res://scenes/world_map/world_map_screen.tscn")
 
 
 func _on_pets_pressed() -> void:

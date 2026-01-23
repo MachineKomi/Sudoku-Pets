@@ -314,19 +314,43 @@ func _handle_game_over() -> void:
 func _on_puzzle_completed() -> void:
 	_timer_active = false
 	
-	# Calculate rewards - UI-SPEC 4.4: Star Rating
-	var stars: int = 3 if _mistakes == 0 else (2 if _mistakes <= 2 else 1)
-	var gold_reward: int = 20 + (stars * 10)
+	# Get current level info from SaveManager (set by WorldMap)
+	var level_id: int = SaveManager.get_value("current_level_id", 1)
+	var difficulty: String = SaveManager.get_value("current_difficulty", "normal")
+	
+	# Use RewardCalculator for proper reward calculation (Story 3.4)
+	var reward_calc := RewardCalculator.new()
+	var numbers_placed: int = board.get_board_size() * board.get_board_size()
+	var rewards := reward_calc.calculate_rewards(difficulty, _mistakes, _time_elapsed, numbers_placed)
+	
+	var xp_reward: int = rewards.xp
+	var gold_reward: int = rewards.gold
+	var stars: int = rewards.stars
+	
 	_session_gold = gold_reward
 	
-	# Save progress
-	var current_gold: int = SaveManager.get_value("player_gold", 100)
-	var current_xp: int = SaveManager.get_value("player_xp", 0)
-	SaveManager.set_value("player_gold", current_gold + gold_reward)
-	SaveManager.set_value("player_xp", current_xp + _session_xp)
+	# Load or create PlayerProgress and update it (Story 3.3: Star Rating)
+	var saved_data: Dictionary = SaveManager.get_value("player_progress", {})
+	var player_progress: PlayerProgress
+	if saved_data.is_empty():
+		player_progress = PlayerProgress.new()
+	else:
+		player_progress = PlayerProgress.from_dict(saved_data)
+	
+	# Update progress with rewards
+	player_progress.add_xp(_session_xp)
+	player_progress.add_gold(gold_reward)
+	player_progress.complete_level(level_id, stars)
+	
+	# Save updated progress
+	SaveManager.set_value("player_progress", player_progress.to_dict())
+	
+	# Also update legacy save values for compatibility
+	SaveManager.set_value("player_gold", player_progress.gold)
+	SaveManager.set_value("player_xp", player_progress.current_xp)
 	SaveManager.save_game()
 	
-	# Show win popup
+	# Show win popup with animated rewards display
 	rewards_label.text = "+%d XP  +%d 🪙" % [_session_xp, gold_reward]
 	stars_label.text = "⭐".repeat(stars) + "☆".repeat(3 - stars)
 	win_popup.visible = true
