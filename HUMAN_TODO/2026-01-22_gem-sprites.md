@@ -151,19 +151,46 @@ Perspective: Front view, slight 3D depth.
 
 ---
 
+## Gem 10 - Obsidian Inverted Triangle
+```
+A gorgeous 3D rendered obsidian gemstone, inverted triangle shape (pointing downward), with the number "10" cleanly etched into the center.
+Style: Anime 3D raytracing, high quality polished video game art asset, delicious mouth feel.
+Material: Translucent crystalline deep teal-black obsidian (#0D5C63) with mysterious dark iridescent refractions, hints of emerald green shimmer within the darkness, and glossy volcanic glass surface.
+Lighting: Studio lighting, vibrant and sparkling with subtle mysterious glow.
+Background: Transparent, isolated subject, clean silhouette, NO shadow underneath, NO glow underneath.
+Perspective: Front view, slight 3D depth.
+```
+**Color**: Obsidian Teal-Black (#0D5C63)
+**Shape**: Inverted Triangle (pointing down)
+**File**: `assets/sprites/gems/gem_10.png`
+---
+
+# Simplified sprite modifier:
+
+Your next task is to generate a cleaner, slightly simplified version of the number 1 gem. 
+
+It currently appears crispy/noisy at the resolution its displayed at in game - so we need a cleaner version of this sprite but that will display better at a lower scale/resolution. 
+
+Also the number needs to be glowing slightly and be slightly brighter white.
+
+Keep it juicy and keep that delicious mouth feel and anime realism. 
+
+---
+
 ## File Placement
 After generating, place files at:
 ```
 sudoku-pets/assets/sprites/gems/
-├── gem_1.png  (Ruby Circle)
-├── gem_2.png  (Amber Oval)
-├── gem_3.png  (Topaz Triangle)
-├── gem_4.png  (Emerald Square)
-├── gem_5.png  (Aquamarine Pentagon)
-├── gem_6.png  (Sapphire Hexagon)
-├── gem_7.png  (Amethyst Star)
-├── gem_8.png  (Rose Diamond)
-├── gem_9.png  (Silver Teardrop)
+├── gem_1.png   (Ruby Circle)
+├── gem_2.png   (Amber Oval)
+├── gem_3.png   (Topaz Triangle)
+├── gem_4.png   (Emerald Square)
+├── gem_5.png   (Aquamarine Pentagon)
+├── gem_6.png   (Sapphire Hexagon)
+├── gem_7.png   (Amethyst Star)
+├── gem_8.png   (Rose Diamond)
+├── gem_9.png   (Silver Teardrop)
+├── gem_10.png  (Obsidian Inverted Triangle)
 ```
 
 ## Color Reference Table
@@ -178,3 +205,4 @@ sudoku-pets/assets/sprites/gems/
 | 7 | Star | #7209B7 | 114, 9, 183 |
 | 8 | Diamond | #F72585 | 247, 37, 133 |
 | 9 | Teardrop | #E0E0E0 | 224, 224, 224 |
+| 10 | Inverted Triangle | #0D5C63 | 13, 92, 99 |
