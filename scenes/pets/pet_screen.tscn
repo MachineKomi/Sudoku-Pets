@@ -14,7 +14,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.85, 0.8, 0.9, 1)
+color = Color(0.15, 0.12, 0.2, 1)
 
 [node name="CenterContainer" type="CenterContainer" parent="."]
 layout_mode = 1
@@ -27,7 +27,7 @@ layout_mode = 2
 theme_override_constants/separation = 20
 
 [node name="TopBar" type="HBoxContainer" parent="CenterContainer/MainVBox"]
-custom_minimum_size = Vector2(600, 50)
+custom_minimum_size = Vector2(700, 50)
 layout_mode = 2
 
 [node name="BackButton" type="Button" parent="CenterContainer/MainVBox/TopBar"]
@@ -58,12 +58,12 @@ layout_mode = 2
 theme_override_constants/separation = 40
 
 [node name="GachaPanel" type="PanelContainer" parent="CenterContainer/MainVBox/ContentHBox"]
-custom_minimum_size = Vector2(280, 400)
+custom_minimum_size = Vector2(300, 450)
 layout_mode = 2
 
 [node name="GachaVBox" type="VBoxContainer" parent="CenterContainer/MainVBox/ContentHBox/GachaPanel"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 12
 alignment = 1
 
 [node name="GachaTitle" type="Label" parent="CenterContainer/MainVBox/ContentHBox/GachaPanel/GachaVBox"]
@@ -86,14 +86,27 @@ theme_override_font_sizes/font_size = 20
 text = "Pull! (100 🪙)"
 
 [node name="ResultLabel" type="Label" parent="CenterContainer/MainVBox/ContentHBox/GachaPanel/GachaVBox"]
-custom_minimum_size = Vector2(0, 60)
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-theme_override_font_sizes/font_size = 48
+theme_override_font_sizes/font_size = 24
 text = ""
 horizontal_alignment = 1
 
+[node name="PityProgress" type="ProgressBar" parent="CenterContainer/MainVBox/ContentHBox/GachaPanel/GachaVBox"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+max_value = 10.0
+value = 0.0
+show_percentage = false
+
+[node name="PityLabel" type="Label" parent="CenterContainer/MainVBox/ContentHBox/GachaPanel/GachaVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Pity: 0/10"
+horizontal_alignment = 1
+
 [node name="CollectionPanel" type="PanelContainer" parent="CenterContainer/MainVBox/ContentHBox"]
-custom_minimum_size = Vector2(280, 400)
+custom_minimum_size = Vector2(350, 450)
 layout_mode = 2
 
 [node name="CollectionVBox" type="VBoxContainer" parent="CenterContainer/MainVBox/ContentHBox/CollectionPanel"]
@@ -106,12 +119,87 @@ theme_override_font_sizes/font_size = 24
 text = "📦 Collection"
 horizontal_alignment = 1
 
-[node name="PetGrid" type="GridContainer" parent="CenterContainer/MainVBox/ContentHBox/CollectionPanel/CollectionVBox"]
+[node name="ScrollContainer" type="ScrollContainer" parent="CenterContainer/MainVBox/ContentHBox/CollectionPanel/CollectionVBox"]
 layout_mode = 2
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="PetGrid" type="GridContainer" parent="CenterContainer/MainVBox/ContentHBox/CollectionPanel/CollectionVBox/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
-columns = 4
+columns = 3
+
+[node name="PetDetailPopup" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -200.0
+offset_right = 150.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="PetDetailPopup"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="NameLabel" type="Label" parent="PetDetailPopup/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Pet Name"
+horizontal_alignment = 1
+
+[node name="SpriteRect" type="TextureRect" parent="PetDetailPopup/VBox"]
+custom_minimum_size = Vector2(120, 120)
+layout_mode = 2
+size_flags_horizontal = 4
+expand_mode = 1
+stretch_mode = 5
+
+[node name="LevelLabel" type="Label" parent="PetDetailPopup/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Level 1 (XP: 0/50)"
+horizontal_alignment = 1
+
+[node name="HappinessLabel" type="Label" parent="PetDetailPopup/VBox"]
+layout_mode = 2
+text = "Happiness"
+horizontal_alignment = 1
+
+[node name="HappinessBar" type="ProgressBar" parent="PetDetailPopup/VBox"]
+custom_minimum_size = Vector2(0, 25)
+layout_mode = 2
+max_value = 100.0
+value = 75.0
+
+[node name="ButtonRow" type="HBoxContainer" parent="PetDetailPopup/VBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="FeedButton" type="Button" parent="PetDetailPopup/VBox/ButtonRow"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+text = "🍎 Feed"
+
+[node name="PlayButton" type="Button" parent="PetDetailPopup/VBox/ButtonRow"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+text = "🎮 Play"
+
+[node name="CloseButton" type="Button" parent="PetDetailPopup/VBox"]
+layout_mode = 2
+text = "✕ Close"
 
 [connection signal="pressed" from="CenterContainer/MainVBox/TopBar/BackButton" to="." method="_on_back_pressed"]
 [connection signal="pressed" from="CenterContainer/MainVBox/ContentHBox/GachaPanel/GachaVBox/PullButton" to="." method="_on_pull_pressed"]
+[connection signal="pressed" from="PetDetailPopup/VBox/ButtonRow/FeedButton" to="." method="_on_feed_pressed"]
+[connection signal="pressed" from="PetDetailPopup/VBox/ButtonRow/PlayButton" to="." method="_on_play_pressed"]
+[connection signal="pressed" from="PetDetailPopup/VBox/CloseButton" to="." method="_on_close_detail_pressed"]
