@@ -8,7 +8,7 @@
 extends Control
 
 signal cell_filled_correct
-signal cell_filled_wrong
+signal cell_filled_wrong(explanation: String)
 signal puzzle_completed
 
 # =============================================================================
@@ -124,15 +124,78 @@ func undo_last_move() -> void:
 	_update_cell(move.index)
 
 
-func show_hint() -> void:
+func show_hint() -> String:
+	"""Find a cell with only one possible candidate and highlight it with explanation (Story 2.2)"""
 	var dim: int = _puzzle.get_grid_dimension()
+	
+	# First try to find a "naked single" - a cell where only one number works
+	for i in range(dim * dim):
+		if _current_grid[i] == 0:
+			var row: int = i / dim
+			var col: int = i % dim
+			var candidates: Array[int] = _get_candidates_for_cell(row, col)
+			
+			if candidates.size() == 1:
+				# This is a naked single - explain it!
+				var correct: int = candidates[0]
+				_selected_cell = i
+				_update_cell(i)
+				queue_redraw()
+				return "Look at this cell! Only a %d can go here!" % correct
+	
+	# Fallback: just hint the first empty cell with its answer
 	for i in range(dim * dim):
 		if _current_grid[i] == 0:
 			var row: int = i / dim
 			var col: int = i % dim
 			var correct: int = _puzzle.get_cell_value(row, col, true)
-			_place_number(i, correct)
-			return
+			_selected_cell = i
+			_update_cell(i)
+			queue_redraw()
+			return "Try putting a %d here!" % correct
+	
+	return "The puzzle is complete!"
+
+
+func _get_candidates_for_cell(row: int, col: int) -> Array[int]:
+	"""Get all valid candidates for a cell (numbers 1-N not in row/col/box)"""
+	var dim: int = _puzzle.get_grid_dimension()
+	var box_w: int = _puzzle.get_box_width()
+	var box_h: int = _puzzle.get_box_height()
+	var candidates: Array[int] = []
+	
+	for num in range(1, dim + 1):
+		if _validator.is_valid_move(_puzzle, row, col, num, _current_grid):
+			candidates.append(num)
+	
+	return candidates
+
+
+func auto_fill_singles() -> int:
+	"""Story 2.3: Auto-fill all naked singles (cells with only one candidate).
+	Returns the number of cells that were auto-filled."""
+	var dim: int = _puzzle.get_grid_dimension()
+	var filled_count: int = 0
+	
+	for i in range(dim * dim):
+		if _current_grid[i] == 0:
+			var row: int = i / dim
+			var col: int = i % dim
+			var candidates: Array[int] = _get_candidates_for_cell(row, col)
+			
+			if candidates.size() == 1:
+				# Auto-fill this naked single
+				_current_grid[i] = candidates[0]
+				_notes_grid[i] = []
+				_update_cell(i)
+				filled_count += 1
+	
+	if filled_count > 0:
+		queue_redraw()
+		cell_filled_correct.emit()
+		_check_completion()
+	
+	return filled_count
 
 # =============================================================================
 # PUZZLE MANAGEMENT
@@ -455,7 +518,11 @@ func _place_number(index: int, num: int) -> void:
 		cell_filled_correct.emit()
 		_check_completion()
 	else:
-		cell_filled_wrong.emit()
+		# Get kid-friendly explanation of why this is wrong (Story 2.1: Educated Error)
+		var explanation: String = _validator.get_conflict_explanation(_puzzle, row, col, num, _current_grid)
+		if explanation.is_empty():
+			explanation = "That's not quite right. Try again!"
+		cell_filled_wrong.emit(explanation)
 		_flash_cell_error(index)
 
 

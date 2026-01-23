@@ -291,7 +291,7 @@ func _on_cell_correct() -> void:
 	_show_pet_message(_get_encouragement())
 
 
-func _on_cell_wrong() -> void:
+func _on_cell_wrong(explanation: String) -> void:
 	_mistakes += 1
 	_lives -= 1
 	_update_lives_ui()
@@ -299,7 +299,8 @@ func _on_cell_wrong() -> void:
 	if _lives <= 0:
 		_handle_game_over()
 	else:
-		_show_pet_message("Oops! Try again!")
+		# Story 2.1: Show the educating error explanation from the validator
+		_show_pet_message(explanation)
 
 
 func _handle_game_over() -> void:
@@ -371,8 +372,9 @@ func _on_undo_pressed() -> void:
 
 
 func _on_hint_pressed() -> void:
-	board.show_hint()
-	_show_pet_message("Here's a hint! 💡")
+	# Story 2.2: Hint system with educational explanation
+	var hint_message: String = board.show_hint()
+	_show_pet_message(hint_message + " 💡")
 
 
 func _on_erase_pressed() -> void:
