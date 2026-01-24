@@ -1,6 +1,71 @@
-[gd_scene load_steps=2 format=3 uid="uid://worldmap_screen"]
+[gd_scene load_steps=8 format=3 uid="uid://worldmap_screen"]
 
 [ext_resource type="Script" path="res://scenes/world_map/world_map_screen.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="header_style"]
+bg_color = Color(1, 1, 1, 0.92)
+border_width_bottom = 2
+border_color = Color(0.9, 0.85, 0.88, 1)
+shadow_color = Color(0.5, 0.3, 0.4, 0.15)
+shadow_size = 6
+shadow_offset = Vector2(0, 3)
+
+[sub_resource type="StyleBoxFlat" id="popup_glass"]
+bg_color = Color(1, 1, 1, 0.96)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1.0, 0.8, 0.88, 0.8)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+shadow_color = Color(0.4, 0.2, 0.35, 0.35)
+shadow_size = 20
+shadow_offset = Vector2(0, 8)
+
+[sub_resource type="StyleBoxFlat" id="btn_breezy"]
+bg_color = Color(0.4, 0.85, 0.6, 1)
+border_width_bottom = 4
+border_color = Color(0.25, 0.65, 0.45, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_color = Color(0.2, 0.5, 0.35, 0.3)
+shadow_size = 4
+
+[sub_resource type="StyleBoxFlat" id="btn_normal"]
+bg_color = Color(0.35, 0.65, 0.95, 1)
+border_width_bottom = 4
+border_color = Color(0.2, 0.45, 0.75, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_color = Color(0.15, 0.35, 0.55, 0.3)
+shadow_size = 4
+
+[sub_resource type="StyleBoxFlat" id="btn_hard"]
+bg_color = Color(0.95, 0.45, 0.45, 1)
+border_width_bottom = 4
+border_color = Color(0.75, 0.28, 0.28, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_color = Color(0.55, 0.2, 0.2, 0.3)
+shadow_size = 4
+
+[sub_resource type="StyleBoxFlat" id="btn_close"]
+bg_color = Color(0.75, 0.7, 0.78, 1)
+border_width_bottom = 3
+border_color = Color(0.55, 0.5, 0.58, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [node name="WorldMapScreen" type="Control"]
 layout_mode = 3
@@ -16,37 +81,65 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.15, 0.15, 0.2, 1)
+color = Color(0.98, 0.95, 0.97, 1)
 
-[node name="Header" type="HBoxContainer" parent="."]
+[node name="BackgroundAccent" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -200.0
+color = Color(0.95, 0.9, 0.94, 1)
+
+[node name="Header" type="PanelContainer" parent="."]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 60.0
+offset_bottom = 65.0
 grow_horizontal = 2
+theme_override_styles/panel = SubResource("header_style")
 
-[node name="BackButton" type="Button" parent="Header"]
+[node name="HBox" type="HBoxContainer" parent="Header"]
 layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="BackButton" type="Button" parent="Header/HBox"]
+custom_minimum_size = Vector2(90, 45)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
 text = "← Back"
 
-[node name="Spacer" type="Control" parent="Header"]
+[node name="Spacer" type="Control" parent="Header/HBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="StarsLabel" type="Label" parent="Header"]
+[node name="StarsLabel" type="Label" parent="Header/HBox"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.75, 0.55, 0.15, 1)
 text = "⭐ 0"
 
-[node name="GoldLabel" type="Label" parent="Header"]
+[node name="Spacer2" type="Control" parent="Header/HBox"]
+custom_minimum_size = Vector2(20, 0)
 layout_mode = 2
+
+[node name="GoldLabel" type="Label" parent="Header/HBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.85, 0.6, 0.1, 1)
 text = "🪙 100"
+
+[node name="Spacer3" type="Control" parent="Header/HBox"]
+custom_minimum_size = Vector2(10, 0)
+layout_mode = 2
 
 [node name="ScrollContainer" type="ScrollContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 60.0
+offset_top = 65.0
 offset_bottom = 0.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -57,56 +150,111 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 10
 
+[node name="PopupDimmer" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.15, 0.1, 0.2, 0.65)
+
 [node name="LevelPopup" type="PanelContainer" parent="."]
 visible = false
+custom_minimum_size = Vector2(380, 420)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -150.0
-offset_top = -120.0
-offset_right = 150.0
-offset_bottom = 120.0
+offset_left = -190.0
+offset_top = -210.0
+offset_right = 190.0
+offset_bottom = 210.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("popup_glass")
 
 [node name="VBox" type="VBoxContainer" parent="LevelPopup"]
 layout_mode = 2
-theme_override_constants/separation = 15
+theme_override_constants/separation = 16
+
+[node name="Spacer1" type="Control" parent="LevelPopup/VBox"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
 
 [node name="TitleLabel" type="Label" parent="LevelPopup/VBox"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(0.22, 0.12, 0.35, 1)
 text = "Level 1"
 horizontal_alignment = 1
 
 [node name="StarsLabel" type="Label" parent="LevelPopup/VBox"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.5, 0.4, 0.55, 1)
 text = "Best: ☆☆☆"
 horizontal_alignment = 1
 
 [node name="BestTimeLabel" type="Label" parent="LevelPopup/VBox"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.55, 0.45, 0.6, 0.8)
 horizontal_alignment = 1
 
-[node name="ButtonsRow" type="HBoxContainer" parent="LevelPopup/VBox"]
+[node name="Separator" type="HSeparator" parent="LevelPopup/VBox"]
 layout_mode = 2
-alignment = 1
 
-[node name="PlayNormalButton" type="Button" parent="LevelPopup/VBox/ButtonsRow"]
+[node name="DifficultyLabel" type="Label" parent="LevelPopup/VBox"]
 layout_mode = 2
-text = "▶ Normal"
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.35, 0.25, 0.45, 1)
+text = "Choose Difficulty:"
+horizontal_alignment = 1
 
-[node name="PlayHardButton" type="Button" parent="LevelPopup/VBox/ButtonsRow"]
+[node name="BreezyButton" type="Button" parent="LevelPopup/VBox"]
+custom_minimum_size = Vector2(0, 55)
 layout_mode = 2
-text = "🔥 Hard"
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_styles/normal = SubResource("btn_breezy")
+theme_override_styles/hover = SubResource("btn_breezy")
+text = "🌴 Breezy  •  ∞ Mistakes"
+
+[node name="NormalButton" type="Button" parent="LevelPopup/VBox"]
+custom_minimum_size = Vector2(0, 55)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_styles/normal = SubResource("btn_normal")
+theme_override_styles/hover = SubResource("btn_normal")
+text = "⭐ Normal  •  5 Lives"
+
+[node name="HardButton" type="Button" parent="LevelPopup/VBox"]
+custom_minimum_size = Vector2(0, 55)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_styles/normal = SubResource("btn_hard")
+theme_override_styles/hover = SubResource("btn_hard")
+text = "🔥 Hard  •  3 Lives"
+
+[node name="Spacer2" type="Control" parent="LevelPopup/VBox"]
+custom_minimum_size = Vector2(0, 4)
+layout_mode = 2
 
 [node name="CloseButton" type="Button" parent="LevelPopup/VBox"]
+custom_minimum_size = Vector2(0, 45)
 layout_mode = 2
-text = "✕ Close"
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_styles/normal = SubResource("btn_close")
+theme_override_styles/hover = SubResource("btn_close")
+text = "✕ Cancel"
 
-[connection signal="pressed" from="Header/BackButton" to="." method="_on_back_pressed"]
-[connection signal="pressed" from="LevelPopup/VBox/ButtonsRow/PlayNormalButton" to="." method="_on_play_normal_pressed"]
-[connection signal="pressed" from="LevelPopup/VBox/ButtonsRow/PlayHardButton" to="." method="_on_play_hard_pressed"]
+[connection signal="pressed" from="Header/HBox/BackButton" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="LevelPopup/VBox/BreezyButton" to="." method="_on_play_breezy_pressed"]
+[connection signal="pressed" from="LevelPopup/VBox/NormalButton" to="." method="_on_play_normal_pressed"]
+[connection signal="pressed" from="LevelPopup/VBox/HardButton" to="." method="_on_play_hard_pressed"]
 [connection signal="pressed" from="LevelPopup/VBox/CloseButton" to="." method="_on_close_popup_pressed"]

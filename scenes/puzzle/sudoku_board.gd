@@ -10,6 +10,7 @@ extends Control
 signal cell_filled_correct
 signal cell_filled_wrong(explanation: String)
 signal puzzle_completed
+signal gold_earned(amount: int)  # US-D.3: Signal for gold conversion animation
 
 # =============================================================================
 # CONSTANTS
@@ -24,11 +25,26 @@ const GEM_SPRITE_PATH: String = "res://assets/sprites/gems/gem_%d.png"
 ## Selection highlight color - bright gold
 const SELECTION_COLOR: Color = Color("#FFD700")
 
+## US-C.2: Bright, cozy theme colors (Kirby-inspired)
+## US-I.3: Added highlighting colors for row/col/region and same-number
+const THEME_COLORS: Dictionary = {
+	"cell_empty": Color("#F5F0E6"),       # Warm cream for empty cells
+	"cell_filled": Color("#FFF8F0"),      # Light cream for filled cells
+	"cell_selected_bg": Color("#FFE4B5"), # Moccasin for selected cell
+	"cell_related_bg": Color("#FFF5E6"),  # US-I.3: Light peach for row/col/region cells
+	"cell_same_number": Color("#E8F5E9"), # US-I.3: Light mint for same-number cells
+	"border_thin": Color("#D4C4B0"),      # Soft brown for cell borders
+	"border_thick": Color("#8B7355"),     # Medium brown for segment borders
+	"border_outer": Color("#6B5344"),     # Dark brown for outer border
+	"segment_alt": Color("#F0EBE0"),      # Slightly darker cream for alternating segments
+}
+
 ## Fallback colors if sprites fail to load
 const GEM_COLORS: Array[Color] = [
 	Color("#E63946"), Color("#F4A261"), Color("#F9C74F"),
 	Color("#2A9D8F"), Color("#00B4D8"), Color("#4361EE"),
 	Color("#7209B7"), Color("#F72585"), Color("#E0E0E0"),
+	Color("#9B59B6"),  # gem_10 - Purple for 10x10 boards
 ]
 
 # =============================================================================
@@ -77,9 +93,9 @@ func _draw() -> void:
 # =============================================================================
 
 func _preload_gem_textures() -> void:
-	"""Preload all gem textures at startup"""
+	"""Preload all gem textures at startup - US-F.1: Now loads 1-10 for 10x10 support"""
 	_gem_textures.clear()
-	for i in range(1, 10):
+	for i in range(1, 11):  # US-F.1: Load gems 1-10
 		var path: String = GEM_SPRITE_PATH % i
 		var texture: Texture2D = load(path) as Texture2D
 		if texture:
@@ -98,7 +114,46 @@ func get_board_size() -> int:
 
 
 func set_selected_number(num: int) -> void:
+	# DEPRECATED: This was used for toggle-based input
+	# Kept for compatibility but no longer used in click-to-place mode
 	_selected_number = num
+
+
+func place_number_in_selected_cell(num: int) -> void:
+	"""US-B.1: Place a number in the currently selected cell immediately.
+	Called directly when user clicks a number button."""
+	if _selected_cell < 0:
+		return
+	
+	# Can't modify given cells
+	if _puzzle.starting_grid[_selected_cell] != 0:
+		return
+	
+	_place_number(_selected_cell, num)
+
+
+func clear_selected_cell() -> void:
+	"""Clear the value in the currently selected cell (erase)."""
+	if _selected_cell < 0:
+		return
+	
+	# Can't modify given cells
+	if _puzzle.starting_grid[_selected_cell] != 0:
+		return
+	
+	var old_value: int = _current_grid[_selected_cell]
+	if old_value == 0:
+		return  # Already empty
+	
+	# Add to history for undo
+	_move_history.append({
+		"index": _selected_cell,
+		"old_value": old_value,
+		"new_value": 0
+	})
+	
+	_current_grid[_selected_cell] = 0
+	_update_cell(_selected_cell)
 
 
 func toggle_note(index: int, num: int) -> void:
@@ -125,8 +180,17 @@ func undo_last_move() -> void:
 
 
 func show_hint() -> String:
-	"""Find a cell with only one possible candidate and highlight it with explanation (Story 2.2)"""
+	"""Find a cell with only one possible candidate and highlight it with explanation (Story 2.2)
+	
+	FIX for US-H.1: Clear previous hint highlight before showing new one
+	"""
 	var dim: int = _puzzle.get_grid_dimension()
+	
+	# Clear previous selection/hint highlight
+	var old_selected: int = _selected_cell
+	if old_selected >= 0 and old_selected < _cells.size():
+		_selected_cell = -1  # Clear first
+		_update_cell(old_selected)
 	
 	# First try to find a "naked single" - a cell where only one number works
 	for i in range(dim * dim):
@@ -169,6 +233,61 @@ func _get_candidates_for_cell(row: int, col: int) -> Array[int]:
 			candidates.append(num)
 	
 	return candidates
+
+
+# =============================================================================
+# US-I.3: HIGHLIGHTING HELPERS - Row/Col/Region and Same-Number Highlighting
+# =============================================================================
+
+func _is_cell_related_to_selected(index: int) -> bool:
+	"""US-I.3: Check if a cell is in the same row, column, or box as the selected cell"""
+	if _selected_cell < 0:
+		return false
+	if index == _selected_cell:
+		return false  # Don't mark selected cell as "related"
+	
+	var dim: int = _puzzle.get_grid_dimension()
+	var box_w: int = _puzzle.get_box_width()
+	var box_h: int = _puzzle.get_box_height()
+	
+	var sel_row: int = _selected_cell / dim
+	var sel_col: int = _selected_cell % dim
+	var cell_row: int = index / dim
+	var cell_col: int = index % dim
+	
+	# Same row?
+	if cell_row == sel_row:
+		return true
+	
+	# Same column?
+	if cell_col == sel_col:
+		return true
+	
+	# Same box?
+	var sel_box_row: int = sel_row / box_h
+	var sel_box_col: int = sel_col / box_w
+	var cell_box_row: int = cell_row / box_h
+	var cell_box_col: int = cell_col / box_w
+	
+	if sel_box_row == cell_box_row and sel_box_col == cell_box_col:
+		return true
+	
+	return false
+
+
+func _is_same_number_as_selected(index: int) -> bool:
+	"""US-I.3: Check if a cell has the same number as the selected cell"""
+	if _selected_cell < 0:
+		return false
+	if index == _selected_cell:
+		return false  # Don't mark selected cell as "same number"
+	
+	var selected_value: int = _current_grid[_selected_cell]
+	if selected_value == 0:
+		return false  # Selected cell is empty
+	
+	var cell_value: int = _current_grid[index]
+	return cell_value == selected_value
 
 
 func auto_fill_singles() -> int:
@@ -263,7 +382,7 @@ func _create_cell(index: int) -> Control:
 	panel.name = "Background"
 	container.add_child(panel)
 	
-	# Gem sprite (centered with padding)
+	# Gem sprite (centered with minimal padding for larger display - US-C.3)
 	var sprite := TextureRect.new()
 	sprite.name = "GemSprite"
 	# Use anchors for proper sizing within cell
@@ -271,25 +390,25 @@ func _create_cell(index: int) -> Control:
 	sprite.anchor_top = 0.0
 	sprite.anchor_right = 1.0
 	sprite.anchor_bottom = 1.0
-	# Padding from edges (8px on each side)
-	sprite.offset_left = 8
-	sprite.offset_top = 8
-	sprite.offset_right = -8
-	sprite.offset_bottom = -8
+	# Reduced padding (4px on each side) for larger gems - US-C.3
+	sprite.offset_left = 4
+	sprite.offset_top = 4
+	sprite.offset_right = -4
+	sprite.offset_bottom = -4
 	# Stretch mode: keep aspect ratio, center in available space
 	sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	container.add_child(sprite)
 	_cell_sprites.append(sprite)
 	
-	# Notes label (for pencil marks)
+	# Notes label (for pencil marks) - US-B.4: Larger, no placeholder dots
 	var notes_label := Label.new()
 	notes_label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	notes_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	notes_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	notes_label.name = "NotesLabel"
-	notes_label.add_theme_font_size_override("font_size", 11)
-	notes_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.85, 0.9))
+	notes_label.add_theme_font_size_override("font_size", 14)  # Larger than before (was 11)
+	notes_label.add_theme_color_override("font_color", Color(0.4, 0.35, 0.3, 0.9))
 	container.add_child(notes_label)
 	_cell_notes.append(notes_label)
 	
@@ -316,6 +435,8 @@ func _update_all_cells() -> void:
 
 
 func _update_cell(index: int) -> void:
+	"""US-C.2: Updated with bright, cozy theme colors
+	US-I.3: Added row/col/region and same-number highlighting"""
 	var cell: Control = _cells[index]
 	var panel: Panel = cell.get_node("Background") as Panel
 	var sprite: TextureRect = _cell_sprites[index]
@@ -326,57 +447,85 @@ func _update_cell(index: int) -> void:
 	var is_selected: bool = index == _selected_cell
 	var notes: Array = _notes_grid[index]
 	
-	# Create panel style
+	# US-I.3: Check if this cell is related to selected cell (same row/col/region)
+	var is_related: bool = _is_cell_related_to_selected(index)
+	# US-I.3: Check if this cell has the same number as selected cell
+	var is_same_number: bool = _is_same_number_as_selected(index)
+	
+	# Create panel style with bright theme
 	var style := StyleBoxFlat.new()
 	style.corner_radius_top_left = 6
 	style.corner_radius_top_right = 6
 	style.corner_radius_bottom_right = 6
 	style.corner_radius_bottom_left = 6
 	
-	# Selection highlighting
+	# Selection highlighting with priority: selected > same_number > related > normal
 	if is_selected:
 		style.border_width_left = 4
 		style.border_width_top = 4
 		style.border_width_right = 4
 		style.border_width_bottom = 4
 		style.border_color = SELECTION_COLOR
+		style.bg_color = THEME_COLORS["cell_selected_bg"]
+	elif is_same_number and value != 0:
+		# US-I.3: Highlight cells with same number
+		style.border_width_left = 2
+		style.border_width_top = 2
+		style.border_width_right = 2
+		style.border_width_bottom = 2
+		style.border_color = Color("#4CAF50")  # Green border for same number
+		style.bg_color = THEME_COLORS["cell_same_number"]
+	elif is_related:
+		# US-I.3: Highlight cells in same row/col/region
+		style.border_width_left = 1
+		style.border_width_top = 1
+		style.border_width_right = 1
+		style.border_width_bottom = 1
+		style.border_color = THEME_COLORS["border_thin"]
+		style.bg_color = THEME_COLORS["cell_related_bg"]
 	else:
 		style.border_width_left = 1
 		style.border_width_top = 1
 		style.border_width_right = 1
 		style.border_width_bottom = 1
-		style.border_color = Color(0.3, 0.3, 0.35, 0.3)
+		style.border_color = THEME_COLORS["border_thin"]
+		
+		if value == 0:
+			# Empty cell - warm cream
+			style.bg_color = THEME_COLORS["cell_empty"]
+		else:
+			# Filled cell - light cream
+			style.bg_color = THEME_COLORS["cell_filled"]
 	
 	if value == 0:
 		# Empty cell
-		style.bg_color = Color(0.15, 0.15, 0.2, 0.9)
 		sprite.texture = null
 		sprite.visible = false
 		
 		# Show notes if any
 		if not notes.is_empty():
 			notes_label.text = _format_notes_grid(notes)
+			notes_label.add_theme_color_override("font_color", Color(0.4, 0.35, 0.3, 0.9))
 			notes_label.visible = true
 		else:
 			notes_label.text = ""
 			notes_label.visible = false
 	else:
 		# Filled cell - show gem sprite
-		style.bg_color = Color(0.1, 0.1, 0.12, 0.95)
 		notes_label.visible = false
 		notes_label.text = ""
 		
-		# Set gem texture (value is 1-9, array is 0-indexed)
+		# Set gem texture (value is 1-10, array is 0-indexed)
 		var tex_index: int = value - 1
 		if tex_index >= 0 and tex_index < _gem_textures.size():
 			var tex: Texture2D = _gem_textures[tex_index]
 			if tex:
 				sprite.texture = tex
 				sprite.visible = true
-				sprite.show()  # Ensure visibility
+				sprite.show()
 				# Slightly dim given numbers vs player-placed
 				if is_given:
-					sprite.modulate = Color(0.9, 0.9, 0.9, 1.0)
+					sprite.modulate = Color(0.85, 0.85, 0.85, 1.0)
 				else:
 					sprite.modulate = Color.WHITE
 			else:
@@ -404,26 +553,16 @@ func _show_fallback_number(label: Label, value: int, is_given: bool) -> void:
 
 
 func _format_notes_grid(notes: Array) -> String:
-	"""Format notes as a grid - 2x2 for 4x4 board, 3x3 for 9x9"""
-	var dim: int = _puzzle.get_grid_dimension()
-	var grid_size: int = 2 if dim <= 4 else 3
-	var max_num: int = dim
+	"""US-B.4: Format notes without placeholder dots - only show actual noted numbers"""
+	if notes.is_empty():
+		return ""
 	
+	# Simply join the noted numbers with spaces
 	var result: String = ""
-	var num: int = 1
-	
-	for row in range(grid_size):
-		for col in range(grid_size):
-			if num <= max_num:
-				if num in notes:
-					result += str(num)
-				else:
-					result += "·"
-			num += 1
-			if col < grid_size - 1:
-				result += " "
-		if row < grid_size - 1:
-			result += "\n"
+	for i in range(notes.size()):
+		if i > 0:
+			result += " "
+		result += str(notes[i])
 	
 	return result
 
@@ -432,6 +571,7 @@ func _format_notes_grid(notes: Array) -> String:
 # =============================================================================
 
 func _draw_grid_lines() -> void:
+	"""US-C.1: Clear segment/box boundaries with improved visibility"""
 	var dim: int = _puzzle.get_grid_dimension()
 	var box_w: int = _puzzle.get_box_width()
 	var box_h: int = _puzzle.get_box_height()
@@ -440,23 +580,36 @@ func _draw_grid_lines() -> void:
 	var cell_w: float = board_size.x / dim
 	var cell_h: float = board_size.y / dim
 	
-	var line_color: Color = Color(0.1, 0.1, 0.15)
-	var line_width: float = 4.0
+	# Draw alternating segment backgrounds for clarity
+	for box_row in range(ceili(float(dim) / box_h)):
+		for box_col in range(ceili(float(dim) / box_w)):
+			var is_alternate: bool = (box_row + box_col) % 2 == 1
+			if is_alternate:
+				var x: float = box_col * box_w * cell_w
+				var y: float = box_row * box_h * cell_h
+				var w: float = mini(box_w, dim - box_col * box_w) * cell_w
+				var h: float = mini(box_h, dim - box_row * box_h) * cell_h
+				draw_rect(Rect2(x, y, w, h), THEME_COLORS["segment_alt"], true)
 	
-	# Vertical lines between boxes
+	# Draw thick segment borders
+	var segment_color: Color = THEME_COLORS["border_thick"]
+	var segment_width: float = 4.0
+	
+	# Vertical segment lines
 	for i in range(1, dim):
 		if i % box_w == 0:
 			var x: float = i * cell_w
-			draw_line(Vector2(x, 0), Vector2(x, board_size.y), line_color, line_width)
+			draw_line(Vector2(x, 0), Vector2(x, board_size.y), segment_color, segment_width)
 	
-	# Horizontal lines between boxes
+	# Horizontal segment lines
 	for i in range(1, dim):
 		if i % box_h == 0:
 			var y: float = i * cell_h
-			draw_line(Vector2(0, y), Vector2(board_size.x, y), line_color, line_width)
+			draw_line(Vector2(0, y), Vector2(board_size.x, y), segment_color, segment_width)
 	
-	# Outer border
-	draw_rect(Rect2(Vector2.ZERO, board_size), line_color, false, line_width + 2)
+	# Outer border (thicker and darker)
+	var outer_color: Color = THEME_COLORS["border_outer"]
+	draw_rect(Rect2(Vector2.ZERO, board_size), outer_color, false, 5.0)
 
 
 func _draw_selection_highlight() -> void:
@@ -479,21 +632,16 @@ func _draw_selection_highlight() -> void:
 # =============================================================================
 
 func _on_cell_pressed(index: int) -> void:
+	"""US-B.1: Cell click only selects the cell, does NOT auto-place numbers.
+	US-I.3: Update all cells to refresh row/col/region and same-number highlighting.
+	Numbers are placed by clicking the number buttons after selecting a cell."""
 	var old_selected: int = _selected_cell
 	_selected_cell = index
 	
-	# Update visuals
-	if old_selected >= 0 and old_selected < _cells.size():
-		_update_cell(old_selected)
-	_update_cell(index)
-	
-	# Can't modify given cells
-	if _puzzle.starting_grid[index] != 0:
-		return
-	
-	# Place number if one is selected
-	if _selected_number > 0:
-		_place_number(index, _selected_number)
+	# US-I.3: Update ALL cells to refresh highlighting (row/col/region + same-number)
+	# This is necessary because highlighting depends on the selected cell
+	_update_all_cells()
+	queue_redraw()
 
 
 func _place_number(index: int, num: int) -> void:
@@ -515,6 +663,8 @@ func _place_number(index: int, num: int) -> void:
 	var col: int = index % _puzzle.get_grid_dimension()
 	
 	if _validator.is_correct_number(_puzzle, row, col, num):
+		# US-D.1: Celebrate correct placement!
+		_celebrate_correct_placement(index, num)
 		cell_filled_correct.emit()
 		_check_completion()
 	else:
@@ -524,6 +674,165 @@ func _place_number(index: int, num: int) -> void:
 			explanation = "That's not quite right. Try again!"
 		cell_filled_wrong.emit(explanation)
 		_flash_cell_error(index)
+
+
+func _celebrate_correct_placement(index: int, value: int) -> void:
+	"""US-D.1: Satisfying celebration animation for correct number placement.
+	Gem glows, scales up, slams down with bounce, and particle-like effect."""
+	var sprite: TextureRect = _cell_sprites[index]
+	if not sprite:
+		return
+	
+	var color: Color = GEM_COLORS[value - 1] if value <= GEM_COLORS.size() else Color.WHITE
+	
+	# Create glow effect using modulate
+	var original_modulate: Color = sprite.modulate
+	
+	# Animation sequence using tween
+	var tween := create_tween()
+	tween.set_parallel(false)
+	
+	# 1. Quick scale up with glow
+	tween.tween_property(sprite, "scale", Vector2(1.25, 1.25), 0.08).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(sprite, "modulate", color.lightened(0.4), 0.08)
+	
+	# 2. Slam down with bounce
+	tween.tween_property(sprite, "scale", Vector2(0.95, 0.95), 0.06).set_ease(Tween.EASE_IN)
+	tween.tween_property(sprite, "scale", Vector2(1.08, 1.08), 0.08).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BOUNCE)
+	tween.tween_property(sprite, "scale", Vector2(1.0, 1.0), 0.1).set_ease(Tween.EASE_OUT)
+	
+	# 3. Fade glow back to normal
+	tween.parallel().tween_property(sprite, "modulate", original_modulate, 0.15)
+	
+	# Check for line/segment completion after animation
+	tween.tween_callback(_check_line_completion.bind(index))
+
+
+func _check_line_completion(index: int) -> void:
+	"""US-D.2: Check if placing this number completed a row, column, or box"""
+	var dim: int = _puzzle.get_grid_dimension()
+	var row: int = index / dim
+	var col: int = index % dim
+	
+	# Check row completion
+	if _is_row_complete(row):
+		_celebrate_line_completion("row", row)
+	
+	# Check column completion
+	if _is_column_complete(col):
+		_celebrate_line_completion("column", col)
+	
+	# Check box completion
+	if _is_box_complete(row, col):
+		_celebrate_box_completion(row, col)
+
+
+func _is_row_complete(row: int) -> bool:
+	"""Check if all cells in a row are correctly filled"""
+	var dim: int = _puzzle.get_grid_dimension()
+	for col in range(dim):
+		var index: int = row * dim + col
+		if _current_grid[index] == 0:
+			return false
+		if not _validator.is_correct_number(_puzzle, row, col, _current_grid[index]):
+			return false
+	return true
+
+
+func _is_column_complete(col: int) -> bool:
+	"""Check if all cells in a column are correctly filled"""
+	var dim: int = _puzzle.get_grid_dimension()
+	for row in range(dim):
+		var index: int = row * dim + col
+		if _current_grid[index] == 0:
+			return false
+		if not _validator.is_correct_number(_puzzle, row, col, _current_grid[index]):
+			return false
+	return true
+
+
+func _is_box_complete(row: int, col: int) -> bool:
+	"""Check if all cells in a box are correctly filled"""
+	var dim: int = _puzzle.get_grid_dimension()
+	var box_w: int = _puzzle.get_box_width()
+	var box_h: int = _puzzle.get_box_height()
+	
+	var box_start_row: int = (row / box_h) * box_h
+	var box_start_col: int = (col / box_w) * box_w
+	
+	for r in range(box_start_row, box_start_row + box_h):
+		for c in range(box_start_col, box_start_col + box_w):
+			var index: int = r * dim + c
+			if _current_grid[index] == 0:
+				return false
+			if not _validator.is_correct_number(_puzzle, r, c, _current_grid[index]):
+				return false
+	return true
+
+
+func _celebrate_line_completion(line_type: String, line_index: int) -> void:
+	"""US-D.2: Celebrate completing a row or column with cascading glow effect
+	US-D.3: Also triggers gold conversion animation"""
+	var dim: int = _puzzle.get_grid_dimension()
+	var indices: Array[int] = []
+	
+	if line_type == "row":
+		for col in range(dim):
+			indices.append(line_index * dim + col)
+	else:  # column
+		for row in range(dim):
+			indices.append(row * dim + line_index)
+	
+	# Staggered celebration for each cell in the line
+	for i in range(indices.size()):
+		var cell_index: int = indices[i]
+		var delay: float = i * 0.05  # Stagger effect
+		_celebrate_cell_delayed(cell_index, delay)
+	
+	# US-D.3: Award gold for completing a line (random range 254-646)
+	var gold_amount: int = randi_range(254, 646)
+	gold_earned.emit(gold_amount)
+
+
+func _celebrate_box_completion(row: int, col: int) -> void:
+	"""US-D.2: Celebrate completing a box with cascading glow effect
+	US-D.3: Also triggers gold conversion animation"""
+	var dim: int = _puzzle.get_grid_dimension()
+	var box_w: int = _puzzle.get_box_width()
+	var box_h: int = _puzzle.get_box_height()
+	
+	var box_start_row: int = (row / box_h) * box_h
+	var box_start_col: int = (col / box_w) * box_w
+	
+	var delay_counter: int = 0
+	for r in range(box_start_row, box_start_row + box_h):
+		for c in range(box_start_col, box_start_col + box_w):
+			var index: int = r * dim + c
+			var delay: float = delay_counter * 0.04
+			_celebrate_cell_delayed(index, delay)
+			delay_counter += 1
+	
+	# US-D.3: Award gold for completing a box (random range 254-646)
+	var gold_amount: int = randi_range(254, 646)
+	gold_earned.emit(gold_amount)
+
+
+func _celebrate_cell_delayed(index: int, delay: float) -> void:
+	"""Celebrate a single cell with a delay (for cascading effects)"""
+	if delay > 0:
+		await get_tree().create_timer(delay).timeout
+	
+	var sprite: TextureRect = _cell_sprites[index]
+	if not sprite:
+		return
+	
+	var value: int = _current_grid[index]
+	var color: Color = GEM_COLORS[value - 1] if value > 0 and value <= GEM_COLORS.size() else Color.WHITE
+	
+	# Quick glow pulse
+	var tween := create_tween()
+	tween.tween_property(sprite, "modulate", color.lightened(0.5), 0.1)
+	tween.tween_property(sprite, "modulate", Color.WHITE, 0.2)
 
 
 func _flash_cell_error(index: int) -> void:

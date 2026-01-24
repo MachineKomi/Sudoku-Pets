@@ -44,6 +44,9 @@ func _set_box_dimensions(board_size: PuzzleData.BoardSize) -> void:
 		PuzzleData.BoardSize.SIZE_9X9:
 			_box_width = 3
 			_box_height = 3
+		PuzzleData.BoardSize.SIZE_10X10:  # US-F.1: 10x10 with 5x2 regions
+			_box_width = 5
+			_box_height = 2
 
 
 func _fill_grid() -> bool:

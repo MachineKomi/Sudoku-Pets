@@ -29,9 +29,10 @@ const TOTAL_LEVELS: int = 50
 
 @onready var scroll_container: ScrollContainer = $ScrollContainer
 @onready var level_path_container: VBoxContainer = $ScrollContainer/LevelPathContainer
-@onready var header_gold: Label = $Header/GoldLabel
-@onready var header_stars: Label = $Header/StarsLabel
+@onready var header_gold: Label = $Header/HBox/GoldLabel
+@onready var header_stars: Label = $Header/HBox/StarsLabel
 @onready var level_popup: PanelContainer = $LevelPopup
+@onready var popup_dimmer: ColorRect = $PopupDimmer
 @onready var popup_title: Label = $LevelPopup/VBox/TitleLabel
 @onready var popup_stars: Label = $LevelPopup/VBox/StarsLabel
 @onready var popup_best_time: Label = $LevelPopup/VBox/BestTimeLabel
@@ -55,9 +56,10 @@ func _ready() -> void:
 	_update_header()
 	_hide_popup()
 	
-	# Scroll to highest unlocked level
+	# US-A.1: Scroll to bottom (level 1) initially - levels are built in reverse order
 	await get_tree().process_frame
-	_scroll_to_level(_player_progress.highest_unlocked_level)
+	await get_tree().process_frame  # Extra frame for layout to settle
+	_scroll_to_bottom()
 
 
 func _load_player_progress() -> void:
@@ -80,7 +82,8 @@ func _save_player_progress() -> void:
 # =============================================================================
 
 func _build_level_path() -> void:
-	"""Build the winding path of level nodes"""
+	"""US-A.1: Build the winding path of level nodes in REVERSE order.
+	Level 1 at BOTTOM, higher levels at TOP - scroll UP to progress."""
 	_level_nodes.clear()
 	
 	for child in level_path_container.get_children():
@@ -88,17 +91,28 @@ func _build_level_path() -> void:
 	
 	var current_biome: String = ""
 	
-	for level_id in range(1, TOTAL_LEVELS + 1):
-		# Check for biome change
+	# Build in REVERSE order (highest level first, so it appears at top)
+	for level_id in range(TOTAL_LEVELS, 0, -1):
+		# Check for biome change (still check in forward order for correct headers)
 		var biome: String = _get_biome_for_level(level_id)
-		if biome != current_biome:
-			current_biome = biome
+		
+		# Add biome header when entering a new biome (from top)
+		var next_level_biome: String = _get_biome_for_level(level_id + 1) if level_id < TOTAL_LEVELS else ""
+		if biome != next_level_biome:
 			_add_biome_header(biome, level_id)
 		
 		# Create level node
 		var node: Control = _create_level_node(level_id)
 		level_path_container.add_child(node)
-		_level_nodes.append(node)
+	
+	# Rebuild _level_nodes array in correct order (1 to TOTAL_LEVELS)
+	_level_nodes.clear()
+	for level_id in range(1, TOTAL_LEVELS + 1):
+		# Find the node for this level in the container
+		for child in level_path_container.get_children():
+			if child.has_meta("level_id") and child.get_meta("level_id") == level_id:
+				_level_nodes.append(child)
+				break
 
 
 func _get_biome_for_level(level_id: int) -> String:
@@ -147,6 +161,7 @@ func _create_level_node(level_id: int) -> Control:
 	var row := HBoxContainer.new()
 	row.custom_minimum_size = Vector2(0, 90)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.set_meta("level_id", level_id)  # Store level_id for lookup
 	
 	# Add spacer for zigzag pattern (alternate left/right)
 	if level_id % 2 == 0:
@@ -219,6 +234,12 @@ func _create_level_node(level_id: int) -> Control:
 # SCROLLING
 # =============================================================================
 
+func _scroll_to_bottom() -> void:
+	"""US-A.1: Scroll to bottom where level 1 is located"""
+	if scroll_container:
+		scroll_container.scroll_vertical = scroll_container.get_v_scroll_bar().max_value
+
+
 func _scroll_to_level(level_id: int) -> void:
 	"""Smoothly scroll to bring a level into view"""
 	if level_id < 1 or level_id > _level_nodes.size():
@@ -240,17 +261,19 @@ func _on_level_pressed(level_id: int) -> void:
 
 
 func _show_level_popup(level_id: int) -> void:
-	"""Show popup with level details and play button"""
+	"""US-E.3: Show beautiful popup with level details and difficulty options"""
 	var stars: int = _player_progress.level_stars.get(level_id, 0)
 	
 	popup_title.text = "Level %d" % level_id
 	popup_stars.text = "Best: " + "★".repeat(stars) + "☆".repeat(3 - stars)
 	popup_best_time.text = ""  # TODO: Track best times
 	
+	popup_dimmer.visible = true
 	level_popup.visible = true
 
 
 func _hide_popup() -> void:
+	popup_dimmer.visible = false
 	level_popup.visible = false
 	_selected_level = -1
 
@@ -271,6 +294,14 @@ func _update_header() -> void:
 
 func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/main/main_menu.tscn")
+
+
+func _on_play_breezy_pressed() -> void:
+	"""US-E.1: Breezy mode - unlimited mistakes, relaxed gameplay"""
+	if _selected_level > 0:
+		SaveManager.set_value("current_level_id", _selected_level)
+		SaveManager.set_value("current_difficulty", "breezy")
+		get_tree().change_scene_to_file("res://scenes/puzzle/puzzle_screen.tscn")
 
 
 func _on_play_normal_pressed() -> void:

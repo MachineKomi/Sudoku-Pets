@@ -2,7 +2,8 @@
 class_name PuzzleData
 extends Resource
 
-enum BoardSize { SIZE_2X2 = 2, SIZE_4X4 = 4, SIZE_6X6 = 6, SIZE_9X9 = 9 }
+## US-F.1: Added SIZE_10X10 for 10x10 Sudoku with 5x2 regions
+enum BoardSize { SIZE_2X2 = 2, SIZE_4X4 = 4, SIZE_6X6 = 6, SIZE_9X9 = 9, SIZE_10X10 = 10 }
 enum Difficulty { TUTORIAL, EASY, MEDIUM, HARD, EXPERT }
 
 @export var id: String = ""
@@ -30,6 +31,7 @@ func get_box_width() -> int:
 		BoardSize.SIZE_4X4: return 2
 		BoardSize.SIZE_6X6: return 3
 		BoardSize.SIZE_9X9: return 3
+		BoardSize.SIZE_10X10: return 5  # US-F.1: 5x2 regions
 		_: return 3
 
 
@@ -39,6 +41,7 @@ func get_box_height() -> int:
 		BoardSize.SIZE_4X4: return 2
 		BoardSize.SIZE_6X6: return 2
 		BoardSize.SIZE_9X9: return 3
+		BoardSize.SIZE_10X10: return 2  # US-F.1: 5x2 regions
 		_: return 3
 
 

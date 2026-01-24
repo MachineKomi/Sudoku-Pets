@@ -3,7 +3,52 @@
 [resource]
 default_font_size = 20
 
-Button/colors/font_color = Color(0.2, 0.2, 0.3, 1)
-Button/colors/font_hover_color = Color(0.3, 0.2, 0.4, 1)
-Button/colors/font_pressed_color = Color(0.4, 0.3, 0.5, 1)
-Button/font_sizes/font_size = 24
+# =============================================================================
+# KIRBY GLASSMORPHISM THEME - Gorgeous, cute, anime-inspired
+# =============================================================================
+
+# Base colors - Soft pastels with vibrant accents
+Label/colors/font_color = Color(0.18, 0.11, 0.31, 1)
+Label/colors/font_outline_color = Color(1, 1, 1, 0.5)
+Label/font_sizes/font_size = 20
+
+# Button - Vibrant pink gradient feel
+Button/colors/font_color = Color(1, 1, 1, 1)
+Button/colors/font_hover_color = Color(1, 1, 1, 1)
+Button/colors/font_pressed_color = Color(1, 0.95, 0.98, 1)
+Button/colors/font_disabled_color = Color(0.6, 0.5, 0.6, 0.7)
+Button/font_sizes/font_size = 22
+
+# Panel - Glassmorphism effect
+PanelContainer/styles/panel = SubResource("panel_glass")
+
+# Progress bars - Cute colors
+ProgressBar/font_sizes/font_size = 14
+ProgressBar/colors/font_color = Color(0.3, 0.2, 0.4, 1)
+
+# LineEdit
+LineEdit/colors/font_color = Color(0.2, 0.15, 0.3, 1)
+
+# Slider
+HSlider/styles/slider = SubResource("slider_style")
+
+[sub_resource type="StyleBoxFlat" id="panel_glass"]
+bg_color = Color(1, 1, 1, 0.85)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.8, 0.9, 0.5)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+shadow_color = Color(0.5, 0.3, 0.5, 0.2)
+shadow_size = 8
+
+[sub_resource type="StyleBoxFlat" id="slider_style"]
+bg_color = Color(0.9, 0.85, 0.95, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8

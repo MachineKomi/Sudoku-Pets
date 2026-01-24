@@ -1,6 +1,50 @@
-[gd_scene load_steps=2 format=3 uid="uid://settings_screen"]
+[gd_scene load_steps=6 format=3 uid="uid://settings_screen"]
 
 [ext_resource type="Script" path="res://scenes/main/settings_screen.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="glass_panel"]
+bg_color = Color(1, 1, 1, 0.95)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1.0, 0.75, 0.88, 0.8)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+shadow_color = Color(0.5, 0.25, 0.45, 0.3)
+shadow_size = 16
+shadow_offset = Vector2(0, 6)
+
+[sub_resource type="StyleBoxFlat" id="button_pink"]
+bg_color = Color(1.0, 0.45, 0.65, 1)
+border_width_bottom = 4
+border_color = Color(0.85, 0.28, 0.48, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+shadow_color = Color(0.5, 0.2, 0.4, 0.25)
+shadow_size = 4
+
+[sub_resource type="StyleBoxFlat" id="button_hover"]
+bg_color = Color(1.0, 0.55, 0.72, 1)
+border_width_bottom = 4
+border_color = Color(0.9, 0.38, 0.58, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+shadow_color = Color(0.5, 0.2, 0.4, 0.35)
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="slider_bg"]
+bg_color = Color(0.92, 0.88, 0.95, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 
 [node name="SettingsScreen" type="Control"]
 layout_mode = 3
@@ -14,7 +58,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0, 0, 0, 0.5)
+color = Color(0.18, 0.12, 0.25, 0.7)
 
 [node name="CenterContainer" type="CenterContainer" parent="."]
 layout_mode = 1
@@ -23,69 +67,119 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 
 [node name="Panel" type="PanelContainer" parent="CenterContainer"]
-custom_minimum_size = Vector2(400, 350)
+custom_minimum_size = Vector2(450, 420)
 layout_mode = 2
+theme_override_styles/panel = SubResource("glass_panel")
 
 [node name="VBox" type="VBoxContainer" parent="CenterContainer/Panel"]
 layout_mode = 2
 theme_override_constants/separation = 20
 
+[node name="Spacer1" type="Control" parent="CenterContainer/Panel/VBox"]
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+
 [node name="Title" type="Label" parent="CenterContainer/Panel/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 36
+theme_override_colors/font_color = Color(0.22, 0.12, 0.35, 1)
 text = "⚙️ Settings"
 horizontal_alignment = 1
 
+[node name="Separator1" type="HSeparator" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
 [node name="MusicRow" type="HBoxContainer" parent="CenterContainer/Panel/VBox"]
 layout_mode = 2
+theme_override_constants/separation = 16
 
 [node name="MusicLabel" type="Label" parent="CenterContainer/Panel/VBox/MusicRow"]
-custom_minimum_size = Vector2(120, 0)
+custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.28, 0.18, 0.38, 1)
 text = "🎵 Music"
 
 [node name="MusicSlider" type="HSlider" parent="CenterContainer/Panel/VBox/MusicRow"]
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_styles/slider = SubResource("slider_bg")
 max_value = 100.0
 value = 80.0
 
 [node name="SFXRow" type="HBoxContainer" parent="CenterContainer/Panel/VBox"]
 layout_mode = 2
+theme_override_constants/separation = 16
 
 [node name="SFXLabel" type="Label" parent="CenterContainer/Panel/VBox/SFXRow"]
-custom_minimum_size = Vector2(120, 0)
+custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
-text = "🔊 SFX"
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.28, 0.18, 0.38, 1)
+text = "🔊 Sound FX"
 
 [node name="SFXSlider" type="HSlider" parent="CenterContainer/Panel/VBox/SFXRow"]
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_styles/slider = SubResource("slider_bg")
 max_value = 100.0
 value = 100.0
+
+[node name="Separator2" type="HSeparator" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
 
 [node name="ThemeRow" type="HBoxContainer" parent="CenterContainer/Panel/VBox"]
 layout_mode = 2
 alignment = 1
 
 [node name="ThemeButton" type="Button" parent="CenterContainer/Panel/VBox/ThemeRow"]
-custom_minimum_size = Vector2(200, 40)
+custom_minimum_size = Vector2(240, 50)
 layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_styles/normal = SubResource("button_pink")
+theme_override_styles/hover = SubResource("button_hover")
 text = "🎨 Theme: Normal"
 
 [node name="BreezyRow" type="HBoxContainer" parent="CenterContainer/Panel/VBox"]
 layout_mode = 2
+theme_override_constants/separation = 16
 
 [node name="BreezyLabel" type="Label" parent="CenterContainer/Panel/VBox/BreezyRow"]
-custom_minimum_size = Vector2(120, 0)
+custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.28, 0.18, 0.38, 1)
 text = "🌴 Breezy Mode"
 
 [node name="BreezyToggle" type="CheckButton" parent="CenterContainer/Panel/VBox/BreezyRow"]
 layout_mode = 2
+size_flags_horizontal = 10
+
+[node name="BreezyHint" type="Label" parent="CenterContainer/Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.5, 0.4, 0.55, 0.9)
+text = "Unlimited mistakes, relaxed gameplay"
+horizontal_alignment = 1
+
+[node name="Spacer2" type="Control" parent="CenterContainer/Panel/VBox"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
 
 [node name="CloseButton" type="Button" parent="CenterContainer/Panel/VBox"]
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_styles/normal = SubResource("button_pink")
+theme_override_styles/hover = SubResource("button_hover")
 text = "✕ Close"
 
 [connection signal="value_changed" from="CenterContainer/Panel/VBox/MusicRow/MusicSlider" to="." method="_on_music_slider_value_changed"]

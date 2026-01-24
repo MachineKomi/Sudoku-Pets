@@ -79,7 +79,7 @@ const PET_DB: Dictionary = {
 @onready var result_label: Label = $CenterContainer/MainVBox/ContentHBox/GachaPanel/GachaVBox/ResultLabel
 @onready var pity_progress: ProgressBar = $CenterContainer/MainVBox/ContentHBox/GachaPanel/GachaVBox/PityProgress
 @onready var pity_label: Label = $CenterContainer/MainVBox/ContentHBox/GachaPanel/GachaVBox/PityLabel
-@onready var pet_grid: GridContainer = $CenterContainer/MainVBox/ContentHBox/CollectionPanel/CollectionVBox/PetGrid
+@onready var pet_grid: GridContainer = $CenterContainer/MainVBox/ContentHBox/CollectionPanel/CollectionVBox/ScrollContainer/PetGrid
 @onready var pet_detail_panel: PanelContainer = $PetDetailPopup
 @onready var detail_name: Label = $PetDetailPopup/VBox/NameLabel
 @onready var detail_sprite: TextureRect = $PetDetailPopup/VBox/SpriteRect
@@ -93,7 +93,7 @@ const PET_DB: Dictionary = {
 # STATE
 # =============================================================================
 
-var _owned_pets: Array[Dictionary] = []
+var _owned_pets: Array = []  # Untyped to handle JSON deserialization
 var _pity_counter: int = 0
 var _selected_pet_index: int = -1
 
@@ -110,8 +110,20 @@ func _ready() -> void:
 
 
 func _load_data() -> void:
-	_owned_pets = SaveManager.get_value("owned_pets", [])
-	_pity_counter = SaveManager.get_value("gacha_pity_counter", 0)
+	# Get saved data - may be untyped Array from JSON
+	var saved_pets: Variant = SaveManager.get_value("owned_pets", [])
+	if saved_pets is Array:
+		_owned_pets = saved_pets
+	else:
+		_owned_pets = []
+	
+	var saved_pity: Variant = SaveManager.get_value("gacha_pity_counter", 0)
+	if saved_pity is int:
+		_pity_counter = saved_pity
+	elif saved_pity is float:
+		_pity_counter = int(saved_pity)
+	else:
+		_pity_counter = 0
 
 
 func _save_data() -> void:
@@ -126,13 +138,18 @@ func _save_data() -> void:
 
 func _update_ui() -> void:
 	var gold: int = SaveManager.get_value("player_gold", 100)
-	gold_label.text = "🪙 %d" % gold
-	pull_button.disabled = gold < PULL_COST
+	
+	if gold_label:
+		gold_label.text = "🪙 %d" % gold
+	
+	if pull_button:
+		pull_button.disabled = gold < PULL_COST
 	
 	# Update pity progress (Story 4.1)
 	if pity_progress:
 		pity_progress.max_value = PITY_THRESHOLD
 		pity_progress.value = _pity_counter
+	
 	if pity_label:
 		if _pity_counter >= PITY_THRESHOLD - 1:
 			pity_label.text = "✨ Rare+ guaranteed next pull!"
@@ -142,15 +159,23 @@ func _update_ui() -> void:
 
 func _refresh_collection() -> void:
 	"""Rebuild pet collection grid with levels and happiness (Story 4.2)"""
+	if not pet_grid:
+		push_warning("PetScreen: pet_grid node not found")
+		return
+	
 	for child in pet_grid.get_children():
 		child.queue_free()
 	
 	for i in range(_owned_pets.size()):
-		var pet_entry: Dictionary = _owned_pets[i]
-		var pet_id: String = pet_entry.get("id", "bunny")
+		var pet_entry: Variant = _owned_pets[i]
+		if not pet_entry is Dictionary:
+			continue
+		
+		var pet_dict: Dictionary = pet_entry as Dictionary
+		var pet_id: String = pet_dict.get("id", "bunny")
 		var def: Dictionary = PET_DB.get(pet_id, PET_DB["bunny"])
-		var level: int = pet_entry.get("level", 1)
-		var happiness: int = pet_entry.get("happiness", 75)
+		var level: int = int(pet_dict.get("level", 1))
+		var happiness: int = int(pet_dict.get("happiness", 75))
 		
 		# Container with click detection
 		var container := Button.new()

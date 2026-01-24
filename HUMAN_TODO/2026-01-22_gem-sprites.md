@@ -166,14 +166,59 @@ Perspective: Front view, slight 3D depth.
 ---
 
 # Simplified sprite modifier:
+## To generate new versions of these sprites from the 4K versions that will show up cleanly at the resolution they will actually be displayed at in game: 
 
-Your next task is to generate a cleaner, slightly simplified version of the number 1 gem. 
+You are refining an existing high-resolution (4K) anime gemstone sprite into a
+SMALL-UI-OPTIMIZED VERSION.
 
-It currently appears crispy/noisy at the resolution its displayed at in game - so we need a cleaner version of this sprite but that will display better at a lower scale/resolution. 
+GOAL
+Create a shiny anime gem icon that reads clearly at very small sizes.
+Prioritize clarity, bold shapes, and smooth surfaces over fine detail.
 
-Also the number needs to be glowing slightly and be slightly brighter white.
+STYLE
+- Clean anime game UI art style.
+- Still shiny and glossy, but NOT hyper-detailed.
+- Reduce visual noise so the gem remains readable when downscaled.
 
-Keep it juicy and keep that delicious mouth feel and anime realism. 
+SIMPLIFICATION RULES (CRITICAL)
+- Remove micro-facets and tiny sparkles.
+- Use FEWER, LARGER facets instead of many small ones.
+- Thicken all facet edges and silhouette outlines.
+- Prefer smooth gradients and broad highlights.
+- No thin linework that would disappear at small resolutions.
+
+NUMBER
+- Centered number "{1}". 
+- Bright pure white (#FFFFFF).
+- Slight soft glow only (subtle, controlled).
+- No texture, no grain, no bevel noise.
+- Thick, clean strokes that remain readable at small size.
+
+LIGHTING
+- One main soft highlight.
+- One secondary rim highlight.
+- Avoid starburst sparkles or tiny specular points.
+- Overall softer, calmer lighting.
+
+COLOR
+- Saturated but controlled.
+- Avoid extreme contrast inside the gem.
+- Clear color identity even when reduced to 32px.
+
+BACKGROUND / EXPORT
+- TRUE transparent background (alpha).
+- No background color, no checkerboard, no gradient.
+- No drop shadow.
+- No glow outside the gem silhouette.
+
+COMPOSITION
+- Centered.
+- Generous padding.
+- Clean, bold silhouette.
+
+INTENT
+This sprite must look GOOD and LEGIBLE when scaled down for UI icons.
+Think “Nintendo / JRPG UI gem icon”, not “realistic crystal macro photo”. 
 
 ---
 

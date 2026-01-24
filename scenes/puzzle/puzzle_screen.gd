@@ -29,20 +29,20 @@ const NUMBER_COLORS: Array[Color] = [
 # NODE REFERENCES - Must match puzzle_screen.tscn structure
 # =============================================================================
 
-@onready var board: Control = $CenterContainer/MainVBox/BoardContainer/SudokuBoard
+@onready var board: Control = $CenterContainer/MainVBox/GameArea/BoardContainer/SudokuBoard
 @onready var number_pad: HBoxContainer = $CenterContainer/MainVBox/BottomBar/NumberPad
 @onready var pencil_button: Button = $CenterContainer/MainVBox/BottomBar/PencilButton
 
 # Top Bar Nodes - UI-SPEC 1.2: Currency Display
-@onready var gems_label: Label = $CenterContainer/MainVBox/TopBar/CurrencyBox/GemsLabel
-@onready var coins_label: Label = $CenterContainer/MainVBox/TopBar/CurrencyBox/CoinsLabel
-@onready var timer_label: Label = $CenterContainer/MainVBox/TopBar/TimerLabel
-@onready var heart_container: HBoxContainer = $CenterContainer/MainVBox/TopBar/HeartContainer
+@onready var gems_label: Label = $CenterContainer/MainVBox/TopBar/HBox/CurrencyBox/GemsLabel
+@onready var coins_label: Label = $CenterContainer/MainVBox/TopBar/HBox/CurrencyBox/CoinsLabel
+@onready var timer_label: Label = $CenterContainer/MainVBox/TopBar/HBox/TimerLabel
+@onready var heart_container: HBoxContainer = $CenterContainer/MainVBox/TopBar/HBox/HeartContainer
 
-# Pet companion - bottom right corner
-@onready var pet_sprite: TextureRect = $PetCompanion/PetSprite
-@onready var pet_speech: PanelContainer = $PetCompanion/SpeechBubble
-@onready var speech_text: Label = $PetCompanion/SpeechBubble/SpeechText
+# US-C.4: Pet companion panel - larger and next to board
+@onready var pet_sprite: TextureRect = $CenterContainer/MainVBox/GameArea/PetPanel/PetVBox/PetSpriteContainer/PetSprite
+@onready var pet_speech: PanelContainer = $CenterContainer/MainVBox/GameArea/PetPanel/PetVBox/SpeechBubble
+@onready var speech_text: Label = $CenterContainer/MainVBox/GameArea/PetPanel/PetVBox/SpeechBubble/SpeechText
 
 # Available pet sprites for companion
 const PET_SPRITES: Array[String] = [
@@ -61,21 +61,24 @@ const PET_SPRITES: Array[String] = [
 # STATE VARIABLES
 # =============================================================================
 
-var _selected_number: int = 0
 var _session_xp: int = 0
 var _session_gold: int = 0
 var _mistakes: int = 0
 var _lives: int = 3
+var _breezy_mode: bool = false  # US-E.1: Unlimited mistakes mode
 var _timer_active: bool = true
 var _time_elapsed: float = 0.0
 var _pencil_mode: bool = false
 var _number_buttons: Array[Button] = []
+
+# REMOVED: _selected_number - numbers are no longer "selected", they are actions
 
 # =============================================================================
 # LIFECYCLE
 # =============================================================================
 
 func _ready() -> void:
+	_setup_difficulty_mode()  # US-E.1: Configure based on selected difficulty
 	_setup_number_pad()
 	_setup_pet_companion()
 	_update_ui()
@@ -89,8 +92,28 @@ func _ready() -> void:
 	board.cell_filled_correct.connect(_on_cell_correct)
 	board.cell_filled_wrong.connect(_on_cell_wrong)
 	board.puzzle_completed.connect(_on_puzzle_completed)
+	board.gold_earned.connect(_on_gold_earned)  # US-D.3: Gold conversion animation
 	
 	_show_pet_message("Let's solve this puzzle!")
+
+
+func _setup_difficulty_mode() -> void:
+	"""US-E.1: Configure lives based on selected difficulty"""
+	var difficulty: String = SaveManager.get_value("current_difficulty", "normal")
+	
+	match difficulty:
+		"breezy":
+			_breezy_mode = true
+			_lives = 999  # Effectively unlimited
+		"normal":
+			_breezy_mode = false
+			_lives = 5
+		"hard":
+			_breezy_mode = false
+			_lives = 3
+		_:
+			_breezy_mode = false
+			_lives = 5
 
 
 func _setup_pet_companion() -> void:
@@ -114,141 +137,186 @@ func _process(delta: float) -> void:
 # =============================================================================
 
 func _setup_number_pad() -> void:
+	"""US-B.3: Number pad with gem sprites instead of plain numbers"""
 	var board_size: int = board.get_board_size()
 	
 	for i in range(1, board_size + 1):
 		var btn := Button.new()
-		btn.custom_minimum_size = Vector2(55, 55)
-		btn.text = str(i)
+		btn.custom_minimum_size = Vector2(60, 60)
 		btn.focus_mode = Control.FOCUS_NONE
+		btn.name = "NumBtn_%d" % i
 		
-		# Style the button with gem color
+		# Style the button background
 		_style_number_button(btn, i)
 		
+		# Add gem sprite inside button
+		var gem_sprite := TextureRect.new()
+		gem_sprite.name = "GemSprite"
+		gem_sprite.set_anchors_preset(Control.PRESET_FULL_RECT)
+		gem_sprite.offset_left = 8
+		gem_sprite.offset_top = 8
+		gem_sprite.offset_right = -8
+		gem_sprite.offset_bottom = -8
+		gem_sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		gem_sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		gem_sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		
+		# Load gem texture
+		var gem_path: String = "res://assets/sprites/gems/gem_%d.png" % i
+		if ResourceLoader.exists(gem_path):
+			gem_sprite.texture = load(gem_path)
+		
+		btn.add_child(gem_sprite)
 		btn.pressed.connect(_on_number_button_pressed.bind(i))
 		number_pad.add_child(btn)
 		_number_buttons.append(btn)
 
 
 func _style_number_button(btn: Button, num: int) -> void:
-	"""Style a number button with its gem color"""
-	var color: Color = NUMBER_COLORS[num - 1]
+	"""US-B.3: Style number button with subtle background for gem sprite"""
+	var color: Color = NUMBER_COLORS[num - 1] if num <= NUMBER_COLORS.size() else Color.WHITE
 	
+	# Normal state - subtle background to let gem sprite shine
 	var style := StyleBoxFlat.new()
-	style.bg_color = color
-	style.corner_radius_top_left = 10
-	style.corner_radius_top_right = 10
-	style.corner_radius_bottom_right = 10
-	style.corner_radius_bottom_left = 10
-	style.border_width_left = 2
-	style.border_width_top = 2
-	style.border_width_right = 2
-	style.border_width_bottom = 2
-	style.border_color = color.darkened(0.3)
-	
-	# Add shadow effect
-	style.shadow_color = Color(0, 0, 0, 0.3)
-	style.shadow_size = 3
+	style.bg_color = Color(0.98, 0.96, 0.92, 0.9)  # Light cream, matches board theme
+	style.corner_radius_top_left = 12
+	style.corner_radius_top_right = 12
+	style.corner_radius_bottom_right = 12
+	style.corner_radius_bottom_left = 12
+	style.border_width_left = 3
+	style.border_width_top = 3
+	style.border_width_right = 3
+	style.border_width_bottom = 3
+	style.border_color = color.lightened(0.2)
+	style.shadow_color = Color(0, 0, 0, 0.15)
+	style.shadow_size = 4
 	style.shadow_offset = Vector2(2, 2)
 	
+	# Hover state - brighter border
+	var hover_style := StyleBoxFlat.new()
+	hover_style.bg_color = Color(1.0, 0.98, 0.95, 1.0)
+	hover_style.corner_radius_top_left = 12
+	hover_style.corner_radius_top_right = 12
+	hover_style.corner_radius_bottom_right = 12
+	hover_style.corner_radius_bottom_left = 12
+	hover_style.border_width_left = 4
+	hover_style.border_width_top = 4
+	hover_style.border_width_right = 4
+	hover_style.border_width_bottom = 4
+	hover_style.border_color = color
+	hover_style.shadow_color = Color(0, 0, 0, 0.2)
+	hover_style.shadow_size = 6
+	
+	# Pressed state - slightly darker
+	var pressed_style := StyleBoxFlat.new()
+	pressed_style.bg_color = Color(0.95, 0.93, 0.88, 1.0)
+	pressed_style.corner_radius_top_left = 12
+	pressed_style.corner_radius_top_right = 12
+	pressed_style.corner_radius_bottom_right = 12
+	pressed_style.corner_radius_bottom_left = 12
+	pressed_style.border_width_left = 3
+	pressed_style.border_width_top = 3
+	pressed_style.border_width_right = 3
+	pressed_style.border_width_bottom = 3
+	pressed_style.border_color = color.darkened(0.1)
+	
 	btn.add_theme_stylebox_override("normal", style)
-	btn.add_theme_stylebox_override("hover", style)
-	btn.add_theme_stylebox_override("pressed", style)
-	btn.add_theme_font_size_override("font_size", 24)
-	btn.add_theme_color_override("font_color", Color.WHITE)
+	btn.add_theme_stylebox_override("hover", hover_style)
+	btn.add_theme_stylebox_override("pressed", pressed_style)
 
 
 func _style_pencil_button() -> void:
-	"""Style the pencil toggle button"""
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.3, 0.3, 0.35)
-	style.corner_radius_top_left = 10
-	style.corner_radius_top_right = 10
-	style.corner_radius_bottom_right = 10
-	style.corner_radius_bottom_left = 10
-	
-	pencil_button.add_theme_stylebox_override("normal", style)
-	
-	var pressed_style := StyleBoxFlat.new()
-	pressed_style.bg_color = Color(0.5, 0.4, 0.2)  # Amber when active
-	pressed_style.corner_radius_top_left = 10
-	pressed_style.corner_radius_top_right = 10
-	pressed_style.corner_radius_bottom_right = 10
-	pressed_style.corner_radius_bottom_left = 10
-	pressed_style.border_width_left = 2
-	pressed_style.border_width_top = 2
-	pressed_style.border_width_right = 2
-	pressed_style.border_width_bottom = 2
-	pressed_style.border_color = Color("#FFD700")
-	
-	pencil_button.add_theme_stylebox_override("pressed", pressed_style)
+	"""Initial styling for pencil button - replaced by _update_pencil_button_style"""
+	_update_pencil_button_style()
 
-
-func _highlight_selected_number(num: int) -> void:
-	"""Highlight the currently selected number button"""
-	for i in range(_number_buttons.size()):
-		var btn: Button = _number_buttons[i]
-		var btn_num: int = i + 1
-		var color: Color = NUMBER_COLORS[i]
-		
-		var style := StyleBoxFlat.new()
-		style.corner_radius_top_left = 10
-		style.corner_radius_top_right = 10
-		style.corner_radius_bottom_right = 10
-		style.corner_radius_bottom_left = 10
-		
-		if btn_num == num:
-			# Selected - add glow border
-			style.bg_color = color.lightened(0.1)
-			style.border_width_left = 3
-			style.border_width_top = 3
-			style.border_width_right = 3
-			style.border_width_bottom = 3
-			style.border_color = Color("#FFD700")  # Gold border
-			style.expand_margin_left = 2
-			style.expand_margin_top = 2
-			style.expand_margin_right = 2
-			style.expand_margin_bottom = 2
-		else:
-			# Not selected
-			style.bg_color = color
-			style.border_width_left = 2
-			style.border_width_top = 2
-			style.border_width_right = 2
-			style.border_width_bottom = 2
-			style.border_color = color.darkened(0.3)
-		
-		style.shadow_color = Color(0, 0, 0, 0.3)
-		style.shadow_size = 3
-		style.shadow_offset = Vector2(2, 2)
-		
-		btn.add_theme_stylebox_override("normal", style)
-		btn.add_theme_stylebox_override("hover", style)
 
 # =============================================================================
-# INPUT HANDLERS
+# INPUT HANDLERS - US-B.1: Click-to-Place Input Mode
 # =============================================================================
 
 func _on_pencil_toggled(toggled_on: bool) -> void:
 	_pencil_mode = toggled_on
-	# Clear number selection when entering pencil mode
-	if toggled_on:
-		_selected_number = 0
-		board.set_selected_number(0)
-		_highlight_selected_number(0)
+	# Update button visuals to show mode
+	_update_pencil_button_style()
+	# US-B.3: Switch number pad sprites when pencil mode changes
+	_update_number_pad_sprites()
+
+
+func _update_number_pad_sprites() -> void:
+	"""US-B.3: Switch between regular and small gem sprites based on pencil mode"""
+	for i in range(_number_buttons.size()):
+		var btn: Button = _number_buttons[i]
+		var sprite: TextureRect = btn.get_node_or_null("GemSprite") as TextureRect
+		if not sprite:
+			continue
+		
+		var num: int = i + 1
+		var gem_path: String
+		
+		if _pencil_mode:
+			# Try to load small gem sprite for pencil mode
+			gem_path = "res://assets/sprites/gems/gem_%d_small.png" % num
+			if not ResourceLoader.exists(gem_path):
+				# Fallback to regular gem if small doesn't exist
+				gem_path = "res://assets/sprites/gems/gem_%d.png" % num
+		else:
+			gem_path = "res://assets/sprites/gems/gem_%d.png" % num
+		
+		if ResourceLoader.exists(gem_path):
+			sprite.texture = load(gem_path)
 
 
 func _on_number_button_pressed(num: int) -> void:
+	"""US-B.1: Clicking a number immediately places it in the selected cell.
+	No toggle behavior - numbers are actions, not selections."""
+	
+	# Check if a cell is selected
+	if board._selected_cell < 0:
+		_show_pet_message("Tap a cell first! 👆")
+		return
+	
+	# Check if the selected cell is a given (pre-filled) cell
+	if board._puzzle.starting_grid[board._selected_cell] != 0:
+		_show_pet_message("That cell is already filled! 🔒")
+		return
+	
 	if _pencil_mode:
-		# In pencil mode, toggle note on selected cell
-		board.set_selected_number(0)
-		if board._selected_cell != -1:
-			board.toggle_note(board._selected_cell, num)
+		# Pencil mode - toggle note on selected cell
+		board.toggle_note(board._selected_cell, num)
 	else:
-		# Normal mode - select number for placement
-		_selected_number = num
-		board.set_selected_number(num)
-		_highlight_selected_number(num)
+		# Normal mode - place number IMMEDIATELY in selected cell
+		board.place_number_in_selected_cell(num)
+
+
+func _update_pencil_button_style() -> void:
+	"""Update pencil button appearance based on mode"""
+	if not pencil_button:
+		return
+	
+	var style := StyleBoxFlat.new()
+	style.corner_radius_top_left = 10
+	style.corner_radius_top_right = 10
+	style.corner_radius_bottom_right = 10
+	style.corner_radius_bottom_left = 10
+	
+	if _pencil_mode:
+		style.bg_color = Color(0.9, 0.7, 0.2)  # Bright amber when active
+		style.border_width_left = 3
+		style.border_width_top = 3
+		style.border_width_right = 3
+		style.border_width_bottom = 3
+		style.border_color = Color("#FFD700")
+	else:
+		style.bg_color = Color(0.3, 0.3, 0.35)
+		style.border_width_left = 1
+		style.border_width_top = 1
+		style.border_width_right = 1
+		style.border_width_bottom = 1
+		style.border_color = Color(0.4, 0.4, 0.45)
+	
+	pencil_button.add_theme_stylebox_override("normal", style)
+	pencil_button.add_theme_stylebox_override("hover", style)
+	pencil_button.add_theme_stylebox_override("pressed", style)
 
 # =============================================================================
 # UI UPDATES
@@ -263,8 +331,20 @@ func _update_ui() -> void:
 
 
 func _update_lives_ui() -> void:
-	"""Update heart display - UI-SPEC 4.1: Lives System"""
+	"""Update heart display - UI-SPEC 4.1: Lives System
+	US-E.1: Show infinity symbol for breezy mode"""
 	if not heart_container:
+		return
+	
+	# In breezy mode, show infinity symbol instead of hearts
+	if _breezy_mode:
+		for child in heart_container.get_children():
+			child.queue_free()
+		var infinity_label := Label.new()
+		infinity_label.text = "∞ 🌴"
+		infinity_label.add_theme_font_size_override("font_size", 24)
+		infinity_label.add_theme_color_override("font_color", Color(0.4, 0.85, 0.6))
+		heart_container.add_child(infinity_label)
 		return
 	
 	var hearts: Array[Node] = []
@@ -291,16 +371,58 @@ func _on_cell_correct() -> void:
 	_show_pet_message(_get_encouragement())
 
 
+## US-D.3: Gold conversion animation when completing lines/boxes
+func _on_gold_earned(amount: int) -> void:
+	# Add gold to session total
+	_session_gold += amount
+	
+	# Update player's gold immediately
+	var current_gold: int = SaveManager.get_value("player_gold", 0)
+	SaveManager.set_value("player_gold", current_gold + amount)
+	
+	# Show animated gold popup
+	_show_gold_popup(amount)
+	_update_ui()
+
+
+func _show_gold_popup(amount: int) -> void:
+	"""US-D.3: Show animated gold earned popup with multiplying numbers effect"""
+	# Create floating gold label
+	var gold_label := Label.new()
+	gold_label.text = "+%d 🪙" % amount
+	gold_label.add_theme_font_size_override("font_size", 28)
+	gold_label.add_theme_color_override("font_color", Color("#FFD700"))
+	gold_label.add_theme_color_override("font_outline_color", Color("#8B4513"))
+	gold_label.add_theme_constant_override("outline_size", 3)
+	gold_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	
+	# Position near the board center
+	gold_label.position = Vector2(size.x / 2 - 50, size.y / 2 - 100)
+	add_child(gold_label)
+	
+	# Animate: float up and fade out
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(gold_label, "position:y", gold_label.position.y - 80, 1.2).set_ease(Tween.EASE_OUT)
+	tween.tween_property(gold_label, "modulate:a", 0.0, 1.2).set_ease(Tween.EASE_IN).set_delay(0.3)
+	tween.set_parallel(false)
+	tween.tween_callback(gold_label.queue_free)
+
+
 func _on_cell_wrong(explanation: String) -> void:
 	_mistakes += 1
-	_lives -= 1
-	_update_lives_ui()
 	
-	if _lives <= 0:
-		_handle_game_over()
-	else:
-		# Story 2.1: Show the educating error explanation from the validator
-		_show_pet_message(explanation)
+	# US-E.1: In breezy mode, don't lose lives
+	if not _breezy_mode:
+		_lives -= 1
+		_update_lives_ui()
+		
+		if _lives <= 0:
+			_handle_game_over()
+			return
+	
+	# Story 2.1: Show the educating error explanation from the validator
+	_show_pet_message(explanation)
 
 
 func _handle_game_over() -> void:
@@ -319,13 +441,31 @@ func _on_puzzle_completed() -> void:
 	var difficulty: String = SaveManager.get_value("current_difficulty", "normal")
 	
 	# Use RewardCalculator for proper reward calculation (Story 3.4)
+	# US-D.4: Pass level_id for level-based scaling
 	var reward_calc := RewardCalculator.new()
 	var numbers_placed: int = board.get_board_size() * board.get_board_size()
-	var rewards := reward_calc.calculate_rewards(difficulty, _mistakes, _time_elapsed, numbers_placed)
+	var rewards := reward_calc.calculate_rewards(difficulty, _mistakes, _time_elapsed, numbers_placed, level_id)
 	
 	var xp_reward: int = rewards.xp
 	var gold_reward: int = rewards.gold
-	var stars: int = rewards.stars
+	
+	# US-E.2: Star rating based on difficulty
+	# Breezy = max 1 star (bronze), Normal = max 2 stars (silver), Hard = max 3 stars (gold)
+	var stars: int
+	var star_type: String
+	match difficulty:
+		"breezy":
+			stars = 1
+			star_type = "bronze"
+		"normal":
+			stars = 2
+			star_type = "silver"
+		"hard":
+			stars = 3
+			star_type = "gold"
+		_:
+			stars = rewards.stars
+			star_type = "silver"
 	
 	_session_gold = gold_reward
 	
@@ -350,12 +490,26 @@ func _on_puzzle_completed() -> void:
 	SaveManager.set_value("player_xp", player_progress.current_xp)
 	SaveManager.save_game()
 	
+	# US-G.1: Award XP to equipped pet
+	var pet_leveled_up: bool = _award_pet_xp(xp_reward)
+	
 	# Show win popup with animated rewards display
+	# US-E.2: Show star type (bronze/silver/gold)
 	rewards_label.text = "+%d XP  +%d 🪙" % [_session_xp, gold_reward]
-	stars_label.text = "⭐".repeat(stars) + "☆".repeat(3 - stars)
+	var star_emoji: String
+	match star_type:
+		"bronze": star_emoji = "🥉"
+		"silver": star_emoji = "🥈"
+		"gold": star_emoji = "🥇"
+		_: star_emoji = "⭐"
+	stars_label.text = star_emoji + " " + "⭐".repeat(stars) + "☆".repeat(3 - stars)
 	win_popup.visible = true
 	
-	_show_pet_message("Amazing! You did it! 🎉")
+	# US-G.1: Show special message if pet leveled up
+	if pet_leveled_up:
+		_show_pet_message("LEVEL UP! 🎉✨ I got stronger!")
+	else:
+		_show_pet_message("Amazing! You did it! 🎉")
 
 # =============================================================================
 # PET COMPANION
@@ -383,6 +537,52 @@ func _get_encouragement() -> String:
 	]
 	return messages[randi() % messages.size()]
 
+
+## US-G.1: Award XP to the currently equipped pet
+## Returns true if the pet leveled up
+func _award_pet_xp(xp_amount: int) -> bool:
+	# Get equipped pet ID from save
+	var equipped_pet_id: String = SaveManager.get_value("equipped_pet_id", "")
+	if equipped_pet_id.is_empty():
+		return false
+	
+	# Load pet data from save
+	var pets_data: Array = SaveManager.get_value("owned_pets", [])
+	if pets_data.is_empty():
+		return false
+	
+	# Find the equipped pet and add XP
+	var leveled_up: bool = false
+	for i in range(pets_data.size()):
+		var pet_dict: Dictionary = pets_data[i]
+		if pet_dict.get("id", "") == equipped_pet_id:
+			# Add XP to this pet
+			var current_xp: int = pet_dict.get("xp", 0)
+			var current_level: int = pet_dict.get("level", 1)
+			
+			# Calculate XP needed for next level (same formula as PetInstance)
+			var xp_needed: int = int(100 * pow(1.15, current_level - 1))
+			
+			current_xp += xp_amount
+			
+			# Check for level up
+			if current_xp >= xp_needed:
+				current_xp -= xp_needed
+				current_level += 1
+				leveled_up = true
+			
+			# Update pet data
+			pet_dict["xp"] = current_xp
+			pet_dict["level"] = current_level
+			pets_data[i] = pet_dict
+			
+			# Save updated pets
+			SaveManager.set_value("owned_pets", pets_data)
+			SaveManager.save_game()
+			break
+	
+	return leveled_up
+
 # =============================================================================
 # BUTTON HANDLERS
 # =============================================================================
@@ -402,10 +602,68 @@ func _on_hint_pressed() -> void:
 
 
 func _on_erase_pressed() -> void:
-	_selected_number = 0
-	board.set_selected_number(0)
-	_highlight_selected_number(0)
+	"""Clear the selected cell's value"""
+	if board._selected_cell >= 0:
+		# Check if it's not a given cell
+		if board._puzzle.starting_grid[board._selected_cell] == 0:
+			board.clear_selected_cell()
+		else:
+			_show_pet_message("Can't erase that one! 🔒")
 
 
 func _on_continue_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/main/main_menu.tscn")
+
+
+# =============================================================================
+# US-C.5: PET INTERACTION BUTTONS
+# =============================================================================
+
+func _on_pet_button_pressed() -> void:
+	"""Pet the companion - triggers happy animation"""
+	_play_pet_bounce_animation()
+	_show_pet_message("*purrs happily* 💕")
+
+
+func _on_feed_button_pressed() -> void:
+	"""Feed the companion - costs gold, happiness effect"""
+	var gold: int = SaveManager.get_value("player_gold", 0)
+	if gold >= 10:
+		SaveManager.set_value("player_gold", gold - 10)
+		_play_pet_bounce_animation()
+		_show_pet_message("Yummy! Thank you! 🍖")
+		_update_ui()
+	else:
+		_show_pet_message("Need more gold! 🪙")
+
+
+func _on_change_button_pressed() -> void:
+	"""Change pet companion - cycles through available pets"""
+	_cycle_pet_sprite()
+	_show_pet_message("New friend! 🎉")
+
+
+func _play_pet_bounce_animation() -> void:
+	"""Simple bounce animation for pet interactions"""
+	if not pet_sprite:
+		return
+	
+	var tween := create_tween()
+	tween.tween_property(pet_sprite, "scale", Vector2(1.15, 1.15), 0.1).set_ease(Tween.EASE_OUT)
+	tween.tween_property(pet_sprite, "scale", Vector2(0.95, 0.95), 0.08).set_ease(Tween.EASE_IN)
+	tween.tween_property(pet_sprite, "scale", Vector2(1.05, 1.05), 0.1).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BOUNCE)
+	tween.tween_property(pet_sprite, "scale", Vector2(1.0, 1.0), 0.08)
+
+
+var _current_pet_index: int = 0
+
+func _cycle_pet_sprite() -> void:
+	"""Cycle to the next pet sprite"""
+	if PET_SPRITES.is_empty():
+		return
+	
+	_current_pet_index = (_current_pet_index + 1) % PET_SPRITES.size()
+	var new_path: String = PET_SPRITES[_current_pet_index]
+	
+	if pet_sprite and ResourceLoader.exists(new_path):
+		pet_sprite.texture = load(new_path)
