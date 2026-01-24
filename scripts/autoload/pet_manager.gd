@@ -14,11 +14,11 @@ func _load() -> void:
 	var data: Dictionary = SaveManager.get_value("pet_collection", {})
 	if data.is_empty():
 		collection = PetCollection.new()
-		# Add a starter pet for new players
+		# SP-1: Phoenix cat as default starter pet
 		var starter = Pet.new()
-		starter.id = "starter_bunny"
-		starter.species_id = "bunny"
-		starter.nickname = "Fluffy"
+		starter.id = "starter_cat"
+		starter.species_id = "cat"
+		starter.nickname = "Phoenix"
 		starter.rarity = PetRarity.Tier.COMMON
 		starter.level = 1
 		starter.current_xp = 0
@@ -26,6 +26,7 @@ func _load() -> void:
 		collection.add_pet(starter)
 		collection.set_active_pet(starter.id)
 		save()
+
 	else:
 		collection = PetCollection.from_dict(data)
 
@@ -62,6 +63,43 @@ func spend_shards(species: String, amount: int) -> bool:
 		collection_updated.emit()
 		return true
 	return false
+
+func debug_reset_save() -> void:
+	"""DATA-1: Debug function to reset save with specific starting state"""
+	collection = PetCollection.new()
+	
+	# 1. Phoenix Cat
+	var cat = Pet.new()
+	cat.id = "starter_cat"
+	cat.species_id = "cat"
+	cat.nickname = "Phoenix"
+	cat.rarity = PetRarity.Tier.COMMON
+	collection.add_pet(cat)
+	
+	# 2. Dragon
+	var dragon = Pet.new()
+	dragon.id = "starter_dragon"
+	dragon.species_id = "dragon"
+	dragon.nickname = "Draco"
+	dragon.rarity = PetRarity.Tier.RARE
+	collection.add_pet(dragon)
+	
+	# 3. Owl
+	var owl = Pet.new()
+	owl.id = "starter_owl"
+	owl.species_id = "owl"
+	owl.nickname = "Professor"
+	owl.rarity = PetRarity.Tier.UNCOMMON
+	collection.add_pet(owl)
+	
+	# Set active and save
+	collection.set_active_pet(cat.id)
+	
+	# Reset gold
+	SaveManager.set_value("player_gold", 1000)
+	
+	save()
+	collection_updated.emit()
 
 func get_all_pets() -> Array[Pet]:
 	return collection.pets

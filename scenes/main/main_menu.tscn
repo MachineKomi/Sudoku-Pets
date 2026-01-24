@@ -160,6 +160,21 @@ theme_override_styles/hover = SubResource("button_hover")
 theme_override_styles/pressed = SubResource("button_pressed")
 text = "🐱  My Pets"
 
+[node name="TournamentButton" type="Button" parent="CenterContainer/ContentPanel/VBox"]
+custom_minimum_size = Vector2(340, 72)
+layout_mode = 2
+size_flags_horizontal = 4
+focus_mode = 2
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_styles/normal = SubResource("button_normal")
+theme_override_styles/hover = SubResource("button_hover")
+theme_override_styles/pressed = SubResource("button_pressed")
+text = "⚔️ Battle Tournament"
+
+
 [node name="SettingsButton" type="Button" parent="CenterContainer/ContentPanel/VBox"]
 custom_minimum_size = Vector2(340, 72)
 layout_mode = 2

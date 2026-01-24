@@ -66,8 +66,10 @@ var _notes_grid: Array = []
 var _cells: Array[Control] = []  # Now using Control (Panel with TextureRect)
 var _cell_buttons: Array[Button] = []  # Invisible buttons for click detection
 var _cell_sprites: Array[TextureRect] = []  # Gem sprite displays
-var _cell_notes: Array[Label] = []  # Notes labels
+var _cell_notes: Array[Label] = []  # Notes labels (legacy fallback)
+var _cell_notes_grids: Array[GridContainer] = []  # DN-1: GridContainers for draftnote sprites
 var _selected_cell: int = -1
+
 var _selected_number: int = 0
 var _move_history: Array[Dictionary] = []
 var _generator := SudokuGenerator.new()
@@ -409,6 +411,8 @@ func _build_grid() -> void:
 	_cell_buttons.clear()
 	_cell_sprites.clear()
 	_cell_notes.clear()
+	_cell_notes_grids.clear()  # DN-1: Clear notes grids
+
 	
 	var dim: int = _puzzle.get_grid_dimension()
 	grid_container.columns = dim
@@ -469,16 +473,29 @@ func _create_cell(index: int) -> Control:
 	container.add_child(sprite)
 	_cell_sprites.append(sprite)
 	
-	# Notes label (for pencil marks) - US-B.4: Larger, no placeholder dots
+	# Notes label (for pencil marks) - legacy fallback
 	var notes_label := Label.new()
 	notes_label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	notes_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	notes_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	notes_label.name = "NotesLabel"
-	notes_label.add_theme_font_size_override("font_size", 14)  # Larger than before (was 11)
+	notes_label.add_theme_font_size_override("font_size", 14)
 	notes_label.add_theme_color_override("font_color", Color(0.4, 0.35, 0.3, 0.9))
+	notes_label.visible = false  # DN-1: Hidden by default, use grid instead
 	container.add_child(notes_label)
 	_cell_notes.append(notes_label)
+	
+	# DN-1: GridContainer for draftnote gem sprites
+	var notes_grid := GridContainer.new()
+	notes_grid.name = "NotesGrid"
+	notes_grid.set_anchors_preset(Control.PRESET_CENTER)
+	notes_grid.columns = 2  # 2x2 for 4x4 board, will be updated per board size
+	notes_grid.add_theme_constant_override("h_separation", 1)
+	notes_grid.add_theme_constant_override("v_separation", 1)
+	notes_grid.visible = false
+	container.add_child(notes_grid)
+	_cell_notes_grids.append(notes_grid)
+
 	
 	# Invisible button for click detection (on top)
 	var button := Button.new()
@@ -570,23 +587,29 @@ func _update_cell(index: int) -> void:
 		sprite.texture = null
 		sprite.visible = false
 		
-		# Show notes if any
+		# DN-1: Show notes as draftnote gem sprites in grid
 		if not notes.is_empty():
-			notes_label.text = _format_notes_grid(notes)
-			notes_label.add_theme_color_override("font_color", Color(0.4, 0.35, 0.3, 0.9))
-			notes_label.visible = true
+			_update_notes_grid_display(index, notes)
+			notes_label.visible = false
 		else:
-			notes_label.text = ""
+			_update_notes_grid_display(index, [])
 			notes_label.visible = false
 	else:
 		# Filled cell - show gem sprite
 		notes_label.visible = false
-		notes_label.text = ""
+		_update_notes_grid_display(index, [])  # Clear any notes grid
+
 		
 		# Set gem texture (value is 1-10, array is 0-indexed)
 		var tex_index: int = value - 1
 		if tex_index >= 0 and tex_index < _gem_textures.size():
-			var tex: Texture2D = _gem_textures[tex_index]
+			var tex: Texture2D
+			# GW-1: Use glowing texture for completed cells
+			if index in _completed_cells and tex_index < _gem_textures_glowing.size():
+				tex = _gem_textures_glowing[tex_index]
+			else:
+				tex = _gem_textures[tex_index]
+			
 			if tex:
 				sprite.texture = tex
 				sprite.visible = true
@@ -604,6 +627,7 @@ func _update_cell(index: int) -> void:
 	
 	panel.add_theme_stylebox_override("panel", style)
 	queue_redraw()
+
 
 
 func _show_fallback_number(label: Label, value: int, is_given: bool) -> void:
@@ -630,6 +654,67 @@ func _format_notes_grid(notes: Array) -> String:
 		result += str(notes[i])
 	
 	return result
+
+
+func _update_notes_grid_display(index: int, notes: Array) -> void:
+	"""DN-1/DN-3/DN-4: Update the notes grid with draftnote gem sprites
+	- Fixed positions (1 top-left, etc.)
+	- Dynamic sizing (larger when fewer, standard when full)
+	"""
+	if index < 0 or index >= _cell_notes_grids.size():
+		return
+	
+	var notes_grid: GridContainer = _cell_notes_grids[index]
+	
+	# Clear existing sprites
+	for child in notes_grid.get_children():
+		child.queue_free()
+	
+	if notes.is_empty():
+		notes_grid.visible = false
+		return
+	
+	# Determine grid columns based on board size
+	var dim: int = _puzzle.get_grid_dimension() if _puzzle else 4
+	var cols: int = 2 if dim <= 4 else 3  # 2x2 for 4x4, 3x3 for larger
+	notes_grid.columns = cols
+	
+	# Calculate sprite size to fit in cell
+	# DN-4: Make them as large as possible
+	var sprite_size: int = int(CELL_SIZE / cols) - 2
+	
+	# DN-3: Fixed positional layout
+	# We need to fill slots 1 through dim
+	# For each slot i (1..dim), check if 'i' is in 'notes'
+	# If yes, show sprite. If no, show empty spacer.
+	
+	for i in range(1, dim + 1):
+		if i in notes:
+			# Show sprite
+			var tex_index: int = i - 1
+			if tex_index >= 0 and tex_index < _gem_textures_draftnote.size():
+				var sprite := TextureRect.new()
+				sprite.custom_minimum_size = Vector2(sprite_size, sprite_size)
+				sprite.texture = _gem_textures_draftnote[tex_index]
+				sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				notes_grid.add_child(sprite)
+			else:
+				# Fallback if texture missing
+				var spacer := Control.new()
+				spacer.custom_minimum_size = Vector2(sprite_size, sprite_size)
+				notes_grid.add_child(spacer)
+		else:
+			# Empty slot
+			var spacer := Control.new()
+			spacer.custom_minimum_size = Vector2(sprite_size, sprite_size)
+			# Make it transparent but take up space
+			notes_grid.add_child(spacer)
+	
+	notes_grid.visible = true
+
+
+
 
 # =============================================================================
 # DRAWING

@@ -150,17 +150,18 @@ func _setup_number_pad() -> void:
 		# Style the button background
 		_style_number_button(btn, i)
 		
-		# Add gem sprite inside button
+		# Add gem sprite inside button - DN-2: Larger sprites
 		var gem_sprite := TextureRect.new()
 		gem_sprite.name = "GemSprite"
 		gem_sprite.set_anchors_preset(Control.PRESET_FULL_RECT)
-		gem_sprite.offset_left = 8
-		gem_sprite.offset_top = 8
-		gem_sprite.offset_right = -8
-		gem_sprite.offset_bottom = -8
+		gem_sprite.offset_left = 4
+		gem_sprite.offset_top = 4
+		gem_sprite.offset_right = -4
+		gem_sprite.offset_bottom = -4
 		gem_sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		gem_sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		gem_sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
 		
 		# Load gem texture
 		var gem_path: String = "res://assets/sprites/gems/gem_%d.png" % i
@@ -528,15 +529,17 @@ func _show_pet_message(msg: String) -> void:
 
 
 func _get_encouragement() -> String:
+	"""PP-1: Get personality-based encouragement from pet dialogue system"""
+	var pet: Pet = PetManager.get_active_pet()
+	if pet:
+		return PetDialogue.get_correct_move(pet.species_id)
+	# Fallback messages
 	var messages: Array[String] = [
 		"Great job! 🌟",
 		"You're amazing! ✨",
 		"Keep going! 💪",
-		"Wonderful! 🎉",
-		"So smart! 🧠",
-		"Yay! 🎊",
-		"Perfect! 💯"
 	]
+
 	return messages[randi() % messages.size()]
 
 
@@ -590,7 +593,8 @@ func _award_pet_xp(xp_amount: int) -> bool:
 # =============================================================================
 
 func _on_back_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main/main_menu.tscn")
+	# NAV-1: Go back to world map instead of main menu
+	get_tree().change_scene_to_file("res://scenes/world_map/world_map_screen.tscn")
 
 
 func _on_undo_pressed() -> void:
@@ -613,8 +617,17 @@ func _on_erase_pressed() -> void:
 			_show_pet_message("Can't erase that one! 🔒")
 
 
-func _on_continue_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main/main_menu.tscn")
+func _on_next_level_pressed() -> void:
+	"""NAV-1: Advance to next level"""
+	var current: int = SaveManager.get_value("current_level_id", 1)
+	if current < 50:
+		SaveManager.set_value("current_level_id", current + 1)
+		# Reload current scene to play next level
+		get_tree().change_scene_to_file("res://scenes/puzzle/puzzle_screen.tscn")
+	else:
+		# Max level reached - back to map
+		get_tree().change_scene_to_file("res://scenes/world_map/world_map_screen.tscn")
+
 
 
 # =============================================================================
@@ -646,28 +659,29 @@ func _on_change_button_pressed() -> void:
 	window.pet_selected.connect(_on_pet_selected)
 
 
+func _update_pet_ui() -> void:
+	"""Update pet sprite to reflect current active pet from PetManager"""
+	var active_pet: Pet = PetManager.get_active_pet()
+	if not active_pet:
+		return
+	
+	var path: String = "res://assets/sprites/pets/%s.png" % active_pet.species_id
+	if ResourceLoader.exists(path) and pet_sprite:
+		pet_sprite.texture = load(path)
+
+
 func _on_pet_selected(pet_id: String) -> void:
 	"""Handle pet selection from window"""
-	# Update save
-	SaveManager.set_value("equipped_pet_id", pet_id)
-	SaveManager.save_game()
+
+	# PS-2: Fix logic - update active pet in manager
+	PetManager.set_active_pet(pet_id)
 	
-	# Update sprite
-	var pets_data: Array = SaveManager.get_value("owned_pets", [])
-	var species: String = "cat"
-	
-	for p in pets_data:
-		if p.get("id") == pet_id:
-			species = p.get("species_id", "cat")
-			break
-	
-	var path: String = "res://assets/sprites/pets/%s.png" % species
-	if ResourceLoader.exists(path):
-		if pet_sprite:
-			pet_sprite.texture = load(path)
+	# Update UI (sprite, name, etc.)
+	_update_pet_ui()
 	
 	_show_pet_message("I choose you! ✨")
 	_play_pet_bounce_animation()
+
 
 
 func _play_pet_bounce_animation() -> void:
