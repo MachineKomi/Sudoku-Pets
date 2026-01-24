@@ -29,20 +29,21 @@ const NUMBER_COLORS: Array[Color] = [
 # NODE REFERENCES - Must match puzzle_screen.tscn structure
 # =============================================================================
 
-@onready var board: Control = $CenterContainer/MainVBox/GameArea/BoardContainer/SudokuBoard
-@onready var number_pad: HBoxContainer = $CenterContainer/MainVBox/BottomBar/NumberPad
-@onready var pencil_button: Button = $CenterContainer/MainVBox/BottomBar/PencilButton
+@onready var board: Control = $RootCenter/MainVBox/GameArea/BoardContainer/SudokuBoard
+@onready var number_pad: HBoxContainer = $RootCenter/MainVBox/BottomBar/NumberPad
+@onready var pencil_button: Button = $RootCenter/MainVBox/BottomBar/PencilButton
 
 # Top Bar Nodes - UI-SPEC 1.2: Currency Display
-@onready var gems_label: Label = $CenterContainer/MainVBox/TopBar/HBox/CurrencyBox/GemsLabel
-@onready var coins_label: Label = $CenterContainer/MainVBox/TopBar/HBox/CurrencyBox/CoinsLabel
-@onready var timer_label: Label = $CenterContainer/MainVBox/TopBar/HBox/TimerLabel
-@onready var heart_container: HBoxContainer = $CenterContainer/MainVBox/TopBar/HBox/HeartContainer
+@onready var gems_label: Label = $RootCenter/MainVBox/TopBar/HBox/CurrencyBox/GemsLabel
+@onready var coins_label: Label = $RootCenter/MainVBox/TopBar/HBox/CurrencyBox/CoinsLabel
+@onready var timer_label: Label = $RootCenter/MainVBox/TopBar/HBox/TimerLabel
+@onready var heart_container: HBoxContainer = $RootCenter/MainVBox/TopBar/HBox/HeartContainer
 
 # US-C.4: Pet companion panel - larger and next to board
-@onready var pet_sprite: TextureRect = $CenterContainer/MainVBox/GameArea/PetPanel/PetVBox/PetSpriteContainer/PetSprite
-@onready var pet_speech: PanelContainer = $CenterContainer/MainVBox/GameArea/PetPanel/PetVBox/SpeechBubble
-@onready var speech_text: Label = $CenterContainer/MainVBox/GameArea/PetPanel/PetVBox/SpeechBubble/SpeechText
+@onready var pet_sprite: TextureRect = $RootCenter/MainVBox/GameArea/PetPanel/OverlayMargin/PetVBox/PetSpriteContainer/PetSprite
+@onready var pet_speech: PanelContainer = $RootCenter/MainVBox/GameArea/PetPanel/OverlayMargin/PetVBox/SpeechBubble
+@onready var speech_text: Label = $RootCenter/MainVBox/GameArea/PetPanel/OverlayMargin/PetVBox/SpeechBubble/MarginContainer/SpeechText
+
 
 # Available pet sprites for companion
 const PET_SPRITES: Array[String] = [
@@ -254,16 +255,17 @@ func _update_number_pad_sprites() -> void:
 		var gem_path: String
 		
 		if _pencil_mode:
-			# Try to load small gem sprite for pencil mode
-			gem_path = "res://assets/sprites/gems/gem_%d_small.png" % num
+			# GS-2: Use draftnote gem sprite for pencil mode
+			gem_path = "res://assets/sprites/gems/gem_%d_draftnote.png" % num
 			if not ResourceLoader.exists(gem_path):
-				# Fallback to regular gem if small doesn't exist
+				# Fallback to regular gem if draftnote doesn't exist
 				gem_path = "res://assets/sprites/gems/gem_%d.png" % num
 		else:
 			gem_path = "res://assets/sprites/gems/gem_%d.png" % num
 		
 		if ResourceLoader.exists(gem_path):
 			sprite.texture = load(gem_path)
+
 
 
 func _on_number_button_pressed(num: int) -> void:
@@ -638,32 +640,43 @@ func _on_feed_button_pressed() -> void:
 
 
 func _on_change_button_pressed() -> void:
-	"""Change pet companion - cycles through available pets"""
-	_cycle_pet_sprite()
-	_show_pet_message("New friend! 🎉")
+	"""Change pet companion - open selection window"""
+	var window = preload("res://scenes/pets/pet_selection_window.tscn").instantiate()
+	add_child(window)
+	window.pet_selected.connect(_on_pet_selected)
+
+
+func _on_pet_selected(pet_id: String) -> void:
+	"""Handle pet selection from window"""
+	# Update save
+	SaveManager.set_value("equipped_pet_id", pet_id)
+	SaveManager.save_game()
+	
+	# Update sprite
+	var pets_data: Array = SaveManager.get_value("owned_pets", [])
+	var species: String = "cat"
+	
+	for p in pets_data:
+		if p.get("id") == pet_id:
+			species = p.get("species_id", "cat")
+			break
+	
+	var path: String = "res://assets/sprites/pets/%s.png" % species
+	if ResourceLoader.exists(path):
+		if pet_sprite:
+			pet_sprite.texture = load(path)
+	
+	_show_pet_message("I choose you! ✨")
+	_play_pet_bounce_animation()
 
 
 func _play_pet_bounce_animation() -> void:
-	"""Simple bounce animation for pet interactions"""
+	"""Play a bounce animation on the pet sprite for happy responses"""
 	if not pet_sprite:
 		return
 	
 	var tween := create_tween()
-	tween.tween_property(pet_sprite, "scale", Vector2(1.15, 1.15), 0.1).set_ease(Tween.EASE_OUT)
-	tween.tween_property(pet_sprite, "scale", Vector2(0.95, 0.95), 0.08).set_ease(Tween.EASE_IN)
-	tween.tween_property(pet_sprite, "scale", Vector2(1.05, 1.05), 0.1).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BOUNCE)
+	tween.tween_property(pet_sprite, "scale", Vector2(1.2, 0.8), 0.1)
+	tween.tween_property(pet_sprite, "scale", Vector2(0.9, 1.15), 0.1)
+	tween.tween_property(pet_sprite, "scale", Vector2(1.05, 0.95), 0.08)
 	tween.tween_property(pet_sprite, "scale", Vector2(1.0, 1.0), 0.08)
-
-
-var _current_pet_index: int = 0
-
-func _cycle_pet_sprite() -> void:
-	"""Cycle to the next pet sprite"""
-	if PET_SPRITES.is_empty():
-		return
-	
-	_current_pet_index = (_current_pet_index + 1) % PET_SPRITES.size()
-	var new_path: String = PET_SPRITES[_current_pet_index]
-	
-	if pet_sprite and ResourceLoader.exists(new_path):
-		pet_sprite.texture = load(new_path)

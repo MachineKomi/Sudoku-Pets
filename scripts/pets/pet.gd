@@ -59,6 +59,13 @@ func feed() -> void:
 	happiness = mini(happiness + 10, 100)
 
 
+## Upgrade rarity tier
+func upgrade_rarity() -> void:
+	if rarity < PetRarity.Tier.LEGENDARY:
+		rarity = (rarity + 1) as PetRarity.Tier
+		# Reset level or keep? Usually keep.
+
+
 ## Play with the pet (increases happiness)
 func play() -> void:
 	happiness = mini(happiness + 5, 100)

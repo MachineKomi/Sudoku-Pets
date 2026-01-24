@@ -9,6 +9,9 @@ var pets: Array[Pet] = []
 ## Currently active companion pet ID
 var active_pet_id: String = ""
 
+## Shard inventory: species_id -> count
+var shards: Dictionary = {}
+
 
 ## Add a pet to the collection
 func add_pet(pet: Pet) -> void:
@@ -56,9 +59,37 @@ func has_species(species_id: String) -> bool:
 	return false
 
 
+## Get pet by species ID (first owned of that species)
+func get_pet_by_species(species_id: String) -> Pet:
+	for pet in pets:
+		if pet.species_id == species_id:
+			return pet
+	return null
+
+
+
 ## Get pet count
 func count() -> int:
 	return pets.size()
+
+
+## Add shards for a species
+func add_shards(species_id: String, amount: int) -> void:
+	shards[species_id] = shards.get(species_id, 0) + amount
+
+
+## Get shard count for a species
+func get_shards(species_id: String) -> int:
+	return shards.get(species_id, 0)
+
+
+## Spend shards
+func spend_shards(species_id: String, amount: int) -> bool:
+	var current = get_shards(species_id)
+	if current >= amount:
+		shards[species_id] = current - amount
+		return true
+	return false
 
 
 ## Serialize for save
@@ -69,7 +100,8 @@ func to_dict() -> Dictionary:
 	
 	return {
 		"pets": pet_dicts,
-		"active_pet_id": active_pet_id
+		"active_pet_id": active_pet_id,
+		"shards": shards
 	}
 
 
@@ -77,6 +109,7 @@ func to_dict() -> Dictionary:
 static func from_dict(data: Dictionary) -> PetCollection:
 	var collection := PetCollection.new()
 	collection.active_pet_id = data.get("active_pet_id", "")
+	collection.shards = data.get("shards", {})
 	
 	var pet_dicts: Array = data.get("pets", [])
 	for pet_dict in pet_dicts:

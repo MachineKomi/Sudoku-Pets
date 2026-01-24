@@ -19,8 +19,11 @@ signal gold_earned(amount: int)  # US-D.3: Signal for gold conversion animation
 ## Cell size in pixels - DO NOT REMOVE - used by _build_grid() and _create_cell()
 const CELL_SIZE: int = 80
 
-## Path to gem sprites - files must be named gem_1.png through gem_9.png
+## Path to gem sprites - files must be named gem_1.png through gem_10.png
 const GEM_SPRITE_PATH: String = "res://assets/sprites/gems/gem_%d.png"
+const GEM_GLOWING_PATH: String = "res://assets/sprites/gems/gem_%d_glowing.png"
+const GEM_DRAFTNOTE_PATH: String = "res://assets/sprites/gems/gem_%d_draftnote.png"
+
 
 ## Selection highlight color - bright gold
 const SELECTION_COLOR: Color = Color("#FFD700")
@@ -72,6 +75,12 @@ var _validator := SudokuValidator.new()
 
 ## Preloaded gem textures
 var _gem_textures: Array[Texture2D] = []
+var _gem_textures_glowing: Array[Texture2D] = []
+var _gem_textures_draftnote: Array[Texture2D] = []
+
+## Track cells that are part of completed lines/boxes (keep glowing)
+var _completed_cells: Array[int] = []
+
 
 # =============================================================================
 # LIFECYCLE
@@ -79,7 +88,38 @@ var _gem_textures: Array[Texture2D] = []
 
 func _ready() -> void:
 	_preload_gem_textures()
-	_start_new_puzzle(PuzzleData.BoardSize.SIZE_4X4, PuzzleData.Difficulty.EASY)
+	
+	# LV-2: Read board size from level selection
+	var board_size_val: int = SaveManager.get_value("current_board_size", 4)
+	var board_size: PuzzleData.BoardSize = _int_to_board_size(board_size_val)
+	
+	# Read difficulty from level selection
+	var difficulty_str: String = SaveManager.get_value("current_difficulty", "normal")
+	var difficulty: PuzzleData.Difficulty = _str_to_difficulty(difficulty_str)
+	
+	_start_new_puzzle(board_size, difficulty)
+
+
+func _int_to_board_size(size: int) -> PuzzleData.BoardSize:
+	"""Convert integer board size to enum
+	Note: Only valid sizes are 2, 4, 6, 9, 10 (no 8x8 in PuzzleData)"""
+	match size:
+		4: return PuzzleData.BoardSize.SIZE_4X4
+		6: return PuzzleData.BoardSize.SIZE_6X6
+		9: return PuzzleData.BoardSize.SIZE_9X9
+		10: return PuzzleData.BoardSize.SIZE_10X10
+		_: return PuzzleData.BoardSize.SIZE_4X4
+
+
+
+func _str_to_difficulty(diff: String) -> PuzzleData.Difficulty:
+	"""Convert string difficulty to enum"""
+	match diff:
+		"easy", "breezy": return PuzzleData.Difficulty.EASY
+		"normal": return PuzzleData.Difficulty.MEDIUM
+		"hard": return PuzzleData.Difficulty.HARD
+		_: return PuzzleData.Difficulty.EASY
+
 
 
 func _draw() -> void:
@@ -93,17 +133,27 @@ func _draw() -> void:
 # =============================================================================
 
 func _preload_gem_textures() -> void:
-	"""Preload all gem textures at startup - US-F.1: Now loads 1-10 for 10x10 support"""
+	"""Preload all gem texture variants: normal, glowing, draftnote (1-10)"""
 	_gem_textures.clear()
-	for i in range(1, 11):  # US-F.1: Load gems 1-10
-		var path: String = GEM_SPRITE_PATH % i
-		var texture: Texture2D = load(path) as Texture2D
-		if texture:
-			_gem_textures.append(texture)
-			print("Loaded gem texture: ", path)
-		else:
-			push_warning("Failed to load gem texture: " + path)
-			_gem_textures.append(null)
+	_gem_textures_glowing.clear()
+	_gem_textures_draftnote.clear()
+	
+	for i in range(1, 11):
+		# Normal gem
+		var normal_path: String = GEM_SPRITE_PATH % i
+		var normal_tex: Texture2D = load(normal_path) as Texture2D
+		_gem_textures.append(normal_tex)
+		
+		# Glowing gem
+		var glowing_path: String = GEM_GLOWING_PATH % i
+		var glowing_tex: Texture2D = load(glowing_path) as Texture2D
+		_gem_textures_glowing.append(glowing_tex if glowing_tex else normal_tex)
+		
+		# Draftnote gem
+		var draftnote_path: String = GEM_DRAFTNOTE_PATH % i
+		var draftnote_tex: Texture2D = load(draftnote_path) as Texture2D
+		_gem_textures_draftnote.append(draftnote_tex if draftnote_tex else normal_tex)
+
 
 # =============================================================================
 # PUBLIC API
@@ -129,6 +179,15 @@ func place_number_in_selected_cell(num: int) -> void:
 	if _puzzle.starting_grid[_selected_cell] != 0:
 		return
 	
+	# US-Polish: Can't modify CORRECTLY filled cells (Locked)
+	var current_val: int = _current_grid[_selected_cell]
+	var correct_val: int = _puzzle.get_cell_value(0, 0, true) # Access solution via helper or index
+	# Actually puzzle data has get_cell_value.
+	var row = _selected_cell / _puzzle.get_grid_dimension()
+	var col = _selected_cell % _puzzle.get_grid_dimension()
+	if current_val != 0 and current_val == _puzzle.get_cell_value(row, col, true):
+		return # Locked
+	
 	_place_number(_selected_cell, num)
 
 
@@ -140,6 +199,15 @@ func clear_selected_cell() -> void:
 	# Can't modify given cells
 	if _puzzle.starting_grid[_selected_cell] != 0:
 		return
+	
+	# US-Polish: Can't clear CORRECTLY filled cells (Locked)
+	var current_val: int = _current_grid[_selected_cell]
+	if current_val != 0:
+		var dim = _puzzle.get_grid_dimension()
+		var row = _selected_cell / dim
+		var col = _selected_cell % dim
+		if current_val == _puzzle.get_cell_value(row, col, true):
+			return # Locked
 	
 	var old_value: int = _current_grid[_selected_cell]
 	if old_value == 0:
@@ -390,11 +458,11 @@ func _create_cell(index: int) -> Control:
 	sprite.anchor_top = 0.0
 	sprite.anchor_right = 1.0
 	sprite.anchor_bottom = 1.0
-	# Reduced padding (4px on each side) for larger gems - US-C.3
-	sprite.offset_left = 4
-	sprite.offset_top = 4
-	sprite.offset_right = -4
-	sprite.offset_bottom = -4
+	# Reduced padding (0px on each side) for larger gems - US-C.3
+	sprite.offset_left = 0
+	sprite.offset_top = 0
+	sprite.offset_right = 0
+	sprite.offset_bottom = 0
 	# Stretch mode: keep aspect ratio, center in available space
 	sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -523,11 +591,8 @@ func _update_cell(index: int) -> void:
 				sprite.texture = tex
 				sprite.visible = true
 				sprite.show()
-				# Slightly dim given numbers vs player-placed
-				if is_given:
-					sprite.modulate = Color(0.85, 0.85, 0.85, 1.0)
-				else:
-					sprite.modulate = Color.WHITE
+				# Gems are always bright - no dimming for givens
+				sprite.modulate = Color.WHITE
 			else:
 				# Fallback if texture missing - show colored number
 				sprite.visible = false
@@ -577,34 +642,47 @@ func _draw_grid_lines() -> void:
 	var box_h: int = _puzzle.get_box_height()
 	
 	var board_size: Vector2 = size
-	var cell_w: float = board_size.x / dim
-	var cell_h: float = board_size.y / dim
 	
-	# Draw alternating segment backgrounds for clarity
+	# Exact pixel calculations matching GridContainer (gap = 2)
+	var gap: int = 2
+
+	
 	for box_row in range(ceili(float(dim) / box_h)):
 		for box_col in range(ceili(float(dim) / box_w)):
 			var is_alternate: bool = (box_row + box_col) % 2 == 1
 			if is_alternate:
-				var x: float = box_col * box_w * cell_w
-				var y: float = box_row * box_h * cell_h
-				var w: float = mini(box_w, dim - box_col * box_w) * cell_w
-				var h: float = mini(box_h, dim - box_row * box_h) * cell_h
-				draw_rect(Rect2(x, y, w, h), THEME_COLORS["segment_alt"], true)
+				# Calculate exact position based on cell count and gaps
+				var start_col: int = box_col * box_w
+				var start_row: int = box_row * box_h
+				
+				var x: float = start_col * CELL_SIZE + (start_col) * gap
+				var y: float = start_row * CELL_SIZE + (start_row) * gap
+				
+				# Width/Height depends on how many cells in this box (edge case for non-square)
+				var cells_w: int = mini(box_w, dim - start_col)
+				var cells_h: int = mini(box_h, dim - start_row)
+				
+				var w: float = cells_w * CELL_SIZE + (cells_w - 1) * gap
+				var h: float = cells_h * CELL_SIZE + (cells_h - 1) * gap
+				
+				draw_rect(Rect2(x - 2, y - 2, w + 4, h + 4), THEME_COLORS["segment_alt"], true)
 	
 	# Draw thick segment borders
 	var segment_color: Color = THEME_COLORS["border_thick"]
 	var segment_width: float = 4.0
 	
-	# Vertical segment lines
+	# Vertical segment lines - Draw lines exactly in the gaps between boxes
 	for i in range(1, dim):
 		if i % box_w == 0:
-			var x: float = i * cell_w
+			# Gap is between cell i-1 and i
+			# Position is after i cells and i-1 gaps, plus half gap
+			var x: float = i * CELL_SIZE + (i - 1) * gap + (gap / 2.0)
 			draw_line(Vector2(x, 0), Vector2(x, board_size.y), segment_color, segment_width)
 	
 	# Horizontal segment lines
 	for i in range(1, dim):
 		if i % box_h == 0:
-			var y: float = i * cell_h
+			var y: float = i * CELL_SIZE + (i - 1) * gap + (gap / 2.0)
 			draw_line(Vector2(0, y), Vector2(board_size.x, y), segment_color, segment_width)
 	
 	# Outer border (thicker and darker)
@@ -645,35 +723,49 @@ func _on_cell_pressed(index: int) -> void:
 
 
 func _place_number(index: int, num: int) -> void:
-	var old_value: int = _current_grid[index]
-	
-	_move_history.append({
-		"index": index,
-		"old_value": old_value,
-		"new_value": num
-	})
-	
-	# Clear notes when placing
-	_notes_grid[index] = []
-	_current_grid[index] = num
-	_update_cell(index)
-	
-	# Validate
 	var row: int = index / _puzzle.get_grid_dimension()
 	var col: int = index % _puzzle.get_grid_dimension()
 	
+	# US-Polish: Check correctness BEFORE placing
 	if _validator.is_correct_number(_puzzle, row, col, num):
-		# US-D.1: Celebrate correct placement!
+		# Correct! Place it.
+		var old_value: int = _current_grid[index]
+		
+		_move_history.append({
+			"index": index,
+			"old_value": old_value,
+			"new_value": num
+		})
+		
+		# Clear notes when placing
+		_notes_grid[index] = []
+		_current_grid[index] = num
+		_update_cell(index)
+		
+		# Celebrate
 		_celebrate_correct_placement(index, num)
 		cell_filled_correct.emit()
 		_check_completion()
+		
 	else:
-		# Get kid-friendly explanation of why this is wrong (Story 2.1: Educated Error)
+		# Incorrect! Do NOT place it.
+		# Show error feedback
+		_flash_cell_error(index)
+		_show_error_overlay(index) # Show X
+		
+		# Identify conflicts - convert Vector2i to int indices
+		var dim: int = _puzzle.get_grid_dimension()
+		var conflicts = _validator.get_conflicting_cells(_puzzle, row, col, num, _current_grid)
+		for conflict in conflicts:
+			var conflict_index: int = conflict.y * dim + conflict.x
+			_flash_cell_error(conflict_index)
+			
 		var explanation: String = _validator.get_conflict_explanation(_puzzle, row, col, num, _current_grid)
 		if explanation.is_empty():
 			explanation = "That's not quite right. Try again!"
 		cell_filled_wrong.emit(explanation)
-		_flash_cell_error(index)
+		
+		# Note: We do NOT update _current_grid, so cell remains empty/unchanged
 
 
 func _celebrate_correct_placement(index: int, value: int) -> void:
@@ -818,7 +910,8 @@ func _celebrate_box_completion(row: int, col: int) -> void:
 
 
 func _celebrate_cell_delayed(index: int, delay: float) -> void:
-	"""Celebrate a single cell with a delay (for cascading effects)"""
+	"""Celebrate a single cell with a delay (for cascading effects)
+	GS-1: Uses glowing gem sprite and marks cell as permanently glowing"""
 	if delay > 0:
 		await get_tree().create_timer(delay).timeout
 	
@@ -827,34 +920,109 @@ func _celebrate_cell_delayed(index: int, delay: float) -> void:
 		return
 	
 	var value: int = _current_grid[index]
-	var color: Color = GEM_COLORS[value - 1] if value > 0 and value <= GEM_COLORS.size() else Color.WHITE
+	if value <= 0 or value > _gem_textures_glowing.size():
+		return
 	
-	# Quick glow pulse
+	var color: Color = GEM_COLORS[value - 1] if value <= GEM_COLORS.size() else Color.WHITE
+	
+	# GS-1: Swap to glowing texture permanently
+	var glowing_tex: Texture2D = _gem_textures_glowing[value - 1]
+	if glowing_tex:
+		sprite.texture = glowing_tex
+	
+	# Track this cell as completed (stays glowing)
+	if index not in _completed_cells:
+		_completed_cells.append(index)
+	
+	# Subtle pulse animation on top of glowing texture
 	var tween := create_tween()
-	tween.tween_property(sprite, "modulate", color.lightened(0.5), 0.1)
+	tween.tween_property(sprite, "modulate", Color.WHITE.lightened(0.3), 0.15)
 	tween.tween_property(sprite, "modulate", Color.WHITE, 0.2)
+	
+	# Spawn particle burst
+	_spawn_gem_particles(index, color)
+
+
+
+func _spawn_gem_particles(index: int, color: Color) -> void:
+	"""US-D.4: Spawn colored particle burst from a cell for line/box completion"""
+	var cell: Control = _cells[index]
+	var center: Vector2 = cell.position + Vector2(CELL_SIZE / 2, CELL_SIZE / 2)
+	
+	# Create 8-10 small particles
+	var particle_count: int = randi_range(8, 10)
+	for i in range(particle_count):
+		var particle := ColorRect.new()
+		particle.size = Vector2(6, 6)
+		particle.color = color.lightened(randf_range(0.2, 0.5))
+		particle.position = center - Vector2(3, 3)
+		particle.z_index = 100
+		add_child(particle)
+		
+		# Random direction outward
+		var angle: float = randf() * TAU
+		var distance: float = randf_range(40, 80)
+		var end_pos: Vector2 = center + Vector2(cos(angle), sin(angle)) * distance
+		
+		# Animate outward and fade
+		var tween := create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(particle, "position", end_pos, 0.5).set_ease(Tween.EASE_OUT)
+		tween.tween_property(particle, "modulate:a", 0.0, 0.5).set_delay(0.15)
+		tween.tween_property(particle, "scale", Vector2(0.3, 0.3), 0.5)
+		tween.set_parallel(false)
+		tween.tween_callback(particle.queue_free)
+
 
 
 func _flash_cell_error(index: int) -> void:
+	"""Flash cell red on error - bright flash, slow fade"""
 	var cell: Control = _cells[index]
 	var panel: Panel = cell.get_node("Background") as Panel
 	
-	var error_style := StyleBoxFlat.new()
-	error_style.bg_color = Color("#FF3333")
-	error_style.corner_radius_top_left = 6
-	error_style.corner_radius_top_right = 6
-	error_style.corner_radius_bottom_right = 6
-	error_style.corner_radius_bottom_left = 6
-	error_style.border_width_left = 3
-	error_style.border_width_top = 3
-	error_style.border_width_right = 3
-	error_style.border_width_bottom = 3
-	error_style.border_color = Color("#FF0000")
+	var tween = create_tween()
+	# Bright red flash
+	tween.tween_property(panel, "modulate", Color(1.0, 0.2, 0.2, 1.0), 0.1)
+	# Slow fade back to normal (1.5 seconds)
+	tween.tween_property(panel, "modulate", Color.WHITE, 1.5).set_ease(Tween.EASE_OUT)
+
+
+
+func _show_error_overlay(index: int) -> void:
+	"""Show large RED X over the cell with black outline"""
+	var cell = _cells[index]
 	
-	panel.add_theme_stylebox_override("panel", error_style)
+	# Remove existing X if present
+	var existing = cell.get_node_or_null("ErrorX")
+	if existing:
+		existing.queue_free()
 	
-	await get_tree().create_timer(0.4).timeout
-	_update_cell(index)
+	var x = Label.new()
+	x.name = "ErrorX"
+	x.text = "✖"
+	x.set_anchors_preset(Control.PRESET_FULL_RECT)
+	x.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	x.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	# Red with black outline
+	x.add_theme_color_override("font_color", Color(1.0, 0.1, 0.1, 1.0))
+	x.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1.0))
+	x.add_theme_constant_override("outline_size", 4)
+	x.add_theme_font_size_override("font_size", 52)
+	x.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Set pivot to center for proper scale animation
+	x.pivot_offset = Vector2(CELL_SIZE / 2, CELL_SIZE / 2)
+	cell.add_child(x)
+	
+	# Animation: scale up quickly, hold, then fade slowly
+	var tween = create_tween()
+	x.scale = Vector2(0.5, 0.5)
+	tween.tween_property(x, "scale", Vector2(1.2, 1.2), 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(x, "scale", Vector2(1.0, 1.0), 0.1)
+	# Hold for a moment then fade slowly over 2 seconds
+	tween.tween_interval(0.5)
+	tween.tween_property(x, "modulate:a", 0.0, 2.0).set_ease(Tween.EASE_IN)
+	tween.tween_callback(x.queue_free)
+
 
 
 func _check_completion() -> void:

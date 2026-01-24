@@ -48,6 +48,21 @@ corner_radius_bottom_left = 28
 shadow_color = Color(0.4, 0.2, 0.35, 0.35)
 shadow_size = 20
 
+[sub_resource type="StyleBoxFlat" id="speech_bubble_style"]
+bg_color = Color(1, 1, 1, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.85, 0.75, 0.9, 0.8)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_color = Color(0.3, 0.2, 0.4, 0.25)
+shadow_size = 8
+shadow_offset = Vector2(0, 3)
+
 [node name="PuzzleScreen" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -71,139 +86,130 @@ anchor_bottom = 1.0
 offset_top = -150.0
 color = Color(0.95, 0.9, 0.94, 1)
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="RootCenter" type="CenterContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="MainVBox" type="VBoxContainer" parent="CenterContainer"]
+[node name="MainVBox" type="VBoxContainer" parent="RootCenter"]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="TopBar" type="PanelContainer" parent="CenterContainer/MainVBox"]
+
+[node name="TopBar" type="PanelContainer" parent="RootCenter/MainVBox"]
 custom_minimum_size = Vector2(700, 65)
 layout_mode = 2
 theme_override_styles/panel = SubResource("top_bar_style")
 
-[node name="HBox" type="HBoxContainer" parent="CenterContainer/MainVBox/TopBar"]
+[node name="HBox" type="HBoxContainer" parent="RootCenter/MainVBox/TopBar"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="BackButton" type="Button" parent="CenterContainer/MainVBox/TopBar/HBox"]
+[node name="BackButton" type="Button" parent="RootCenter/MainVBox/TopBar/HBox"]
 custom_minimum_size = Vector2(55, 45)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "←"
 
-[node name="Spacer1" type="Control" parent="CenterContainer/MainVBox/TopBar/HBox"]
+[node name="Spacer1" type="Control" parent="RootCenter/MainVBox/TopBar/HBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="CurrencyBox" type="HBoxContainer" parent="CenterContainer/MainVBox/TopBar/HBox"]
+[node name="CurrencyBox" type="HBoxContainer" parent="RootCenter/MainVBox/TopBar/HBox"]
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="GemsLabel" type="Label" parent="CenterContainer/MainVBox/TopBar/HBox/CurrencyBox"]
+[node name="GemsLabel" type="Label" parent="RootCenter/MainVBox/TopBar/HBox/CurrencyBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.75, 0.35, 0.7, 1)
 theme_override_font_sizes/font_size = 20
 text = "💎 13"
 
-[node name="CoinsLabel" type="Label" parent="CenterContainer/MainVBox/TopBar/HBox/CurrencyBox"]
+[node name="CoinsLabel" type="Label" parent="RootCenter/MainVBox/TopBar/HBox/CurrencyBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.6, 0.1, 1)
 theme_override_font_sizes/font_size = 20
 text = "🪙 100"
 
-[node name="Spacer2" type="Control" parent="CenterContainer/MainVBox/TopBar/HBox"]
+[node name="Spacer2" type="Control" parent="RootCenter/MainVBox/TopBar/HBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="TimerLabel" type="Label" parent="CenterContainer/MainVBox/TopBar/HBox"]
+[node name="TimerLabel" type="Label" parent="RootCenter/MainVBox/TopBar/HBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(0.3, 0.2, 0.4, 1)
 text = "00:00"
 
-[node name="Spacer3" type="Control" parent="CenterContainer/MainVBox/TopBar/HBox"]
+[node name="Spacer3" type="Control" parent="RootCenter/MainVBox/TopBar/HBox"]
 custom_minimum_size = Vector2(30, 0)
 layout_mode = 2
 
-[node name="HeartContainer" type="HBoxContainer" parent="CenterContainer/MainVBox/TopBar/HBox"]
+[node name="HeartContainer" type="HBoxContainer" parent="RootCenter/MainVBox/TopBar/HBox"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="Heart1" type="Label" parent="CenterContainer/MainVBox/TopBar/HBox/HeartContainer"]
+[node name="Heart1" type="Label" parent="RootCenter/MainVBox/TopBar/HBox/HeartContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 text = "❤️"
 
-[node name="Heart2" type="Label" parent="CenterContainer/MainVBox/TopBar/HBox/HeartContainer"]
+[node name="Heart2" type="Label" parent="RootCenter/MainVBox/TopBar/HBox/HeartContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 text = "❤️"
 
-[node name="Heart3" type="Label" parent="CenterContainer/MainVBox/TopBar/HBox/HeartContainer"]
+[node name="Heart3" type="Label" parent="RootCenter/MainVBox/TopBar/HBox/HeartContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 text = "❤️"
 
-[node name="GameArea" type="HBoxContainer" parent="CenterContainer/MainVBox"]
+[node name="GameArea" type="HBoxContainer" parent="RootCenter/MainVBox"]
 layout_mode = 2
 theme_override_constants/separation = 24
 
-[node name="BoardContainer" type="CenterContainer" parent="CenterContainer/MainVBox/GameArea"]
+[node name="BoardContainer" type="CenterContainer" parent="RootCenter/MainVBox/GameArea"]
 layout_mode = 2
 
-[node name="SudokuBoard" parent="CenterContainer/MainVBox/GameArea/BoardContainer" instance=ExtResource("2_board")]
+[node name="SudokuBoard" parent="RootCenter/MainVBox/GameArea/BoardContainer" instance=ExtResource("2_board")]
 layout_mode = 2
 
-[node name="PetPanel" type="PanelContainer" parent="CenterContainer/MainVBox/GameArea"]
+[node name="PetPanel" type="PanelContainer" parent="RootCenter/MainVBox/GameArea"]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("pet_panel_style")
 
-[node name="PetVBox" type="VBoxContainer" parent="CenterContainer/MainVBox/GameArea/PetPanel"]
+[node name="OverlayMargin" type="MarginContainer" parent="RootCenter/MainVBox/GameArea/PetPanel"]
+layout_mode = 2
+
+[node name="PetVBox" type="VBoxContainer" parent="RootCenter/MainVBox/GameArea/PetPanel/OverlayMargin"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="PetLabel" type="Label" parent="CenterContainer/MainVBox/GameArea/PetPanel/PetVBox"]
+[node name="PetLabel" type="Label" parent="RootCenter/MainVBox/GameArea/PetPanel/OverlayMargin/PetVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.4, 0.3, 0.5, 1)
 text = "🐾 Companion"
 horizontal_alignment = 1
 
-[node name="PetSpriteContainer" type="CenterContainer" parent="CenterContainer/MainVBox/GameArea/PetPanel/PetVBox"]
+[node name="PetSpriteContainer" type="CenterContainer" parent="RootCenter/MainVBox/GameArea/PetPanel/OverlayMargin/PetVBox"]
 custom_minimum_size = Vector2(180, 180)
 layout_mode = 2
 
-[node name="PetSprite" type="TextureRect" parent="CenterContainer/MainVBox/GameArea/PetPanel/PetVBox/PetSpriteContainer"]
+[node name="PetSprite" type="TextureRect" parent="RootCenter/MainVBox/GameArea/PetPanel/OverlayMargin/PetVBox/PetSpriteContainer"]
 custom_minimum_size = Vector2(160, 160)
 layout_mode = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="SpeechBubble" type="PanelContainer" parent="CenterContainer/MainVBox/GameArea/PetPanel/PetVBox"]
-visible = false
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-
-[node name="SpeechText" type="Label" parent="CenterContainer/MainVBox/GameArea/PetPanel/PetVBox/SpeechBubble"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0.3, 0.2, 0.4, 1)
-text = "You can do it!"
-horizontal_alignment = 1
-autowrap_mode = 2
-
-[node name="PetButtons" type="HBoxContainer" parent="CenterContainer/MainVBox/GameArea/PetPanel/PetVBox"]
+[node name="PetButtons" type="HBoxContainer" parent="RootCenter/MainVBox/GameArea/PetPanel/OverlayMargin/PetVBox"]
 layout_mode = 2
 alignment = 1
 theme_override_constants/separation = 8
 
-[node name="PetButton" type="Button" parent="CenterContainer/MainVBox/GameArea/PetPanel/PetVBox/PetButtons"]
+[node name="PetButton" type="Button" parent="RootCenter/MainVBox/GameArea/PetPanel/OverlayMargin/PetVBox/PetButtons"]
 custom_minimum_size = Vector2(55, 45)
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
@@ -211,7 +217,7 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_styles/normal = SubResource("pet_btn_style")
 text = "🐾"
 
-[node name="FeedButton" type="Button" parent="CenterContainer/MainVBox/GameArea/PetPanel/PetVBox/PetButtons"]
+[node name="FeedButton" type="Button" parent="RootCenter/MainVBox/GameArea/PetPanel/OverlayMargin/PetVBox/PetButtons"]
 custom_minimum_size = Vector2(55, 45)
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
@@ -219,7 +225,7 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_styles/normal = SubResource("pet_btn_style")
 text = "🍖"
 
-[node name="ChangeButton" type="Button" parent="CenterContainer/MainVBox/GameArea/PetPanel/PetVBox/PetButtons"]
+[node name="ChangeButton" type="Button" parent="RootCenter/MainVBox/GameArea/PetPanel/OverlayMargin/PetVBox/PetButtons"]
 custom_minimum_size = Vector2(55, 45)
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
@@ -227,36 +233,60 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_styles/normal = SubResource("pet_btn_style")
 text = "🔄"
 
-[node name="BottomBar" type="HBoxContainer" parent="CenterContainer/MainVBox"]
+[node name="SpeechBubble" type="PanelContainer" parent="RootCenter/MainVBox/GameArea/PetPanel/OverlayMargin/PetVBox"]
+visible = false
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("speech_bubble_style")
+mouse_filter = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="RootCenter/MainVBox/GameArea/PetPanel/OverlayMargin/PetVBox/SpeechBubble"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="SpeechText" type="Label" parent="RootCenter/MainVBox/GameArea/PetPanel/OverlayMargin/PetVBox/SpeechBubble/MarginContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.3, 0.2, 0.4, 1)
+text = "You can do it!"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="BottomBar" type="HBoxContainer" parent="RootCenter/MainVBox"]
+
 layout_mode = 2
 alignment = 1
 theme_override_constants/separation = 12
 
-[node name="UndoButton" type="Button" parent="CenterContainer/MainVBox/BottomBar"]
+[node name="UndoButton" type="Button" parent="RootCenter/MainVBox/BottomBar"]
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "↩"
 
-[node name="NumberPad" type="HBoxContainer" parent="CenterContainer/MainVBox/BottomBar"]
+[node name="NumberPad" type="HBoxContainer" parent="RootCenter/MainVBox/BottomBar"]
 layout_mode = 2
 alignment = 1
 theme_override_constants/separation = 6
 
-[node name="PencilButton" type="Button" parent="CenterContainer/MainVBox/BottomBar"]
+[node name="PencilButton" type="Button" parent="RootCenter/MainVBox/BottomBar"]
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
 toggle_mode = true
 theme_override_font_sizes/font_size = 24
 text = "✏️"
 
-[node name="HintButton" type="Button" parent="CenterContainer/MainVBox/BottomBar"]
+[node name="HintButton" type="Button" parent="RootCenter/MainVBox/BottomBar"]
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "💡"
 
-[node name="EraseButton" type="Button" parent="CenterContainer/MainVBox/BottomBar"]
+[node name="EraseButton" type="Button" parent="RootCenter/MainVBox/BottomBar"]
 custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
@@ -338,11 +368,11 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_styles/normal = SubResource("pet_btn_style")
 text = "Continue"
 
-[connection signal="pressed" from="CenterContainer/MainVBox/TopBar/HBox/BackButton" to="." method="_on_back_pressed"]
-[connection signal="pressed" from="CenterContainer/MainVBox/GameArea/PetPanel/PetVBox/PetButtons/PetButton" to="." method="_on_pet_button_pressed"]
-[connection signal="pressed" from="CenterContainer/MainVBox/GameArea/PetPanel/PetVBox/PetButtons/FeedButton" to="." method="_on_feed_button_pressed"]
-[connection signal="pressed" from="CenterContainer/MainVBox/GameArea/PetPanel/PetVBox/PetButtons/ChangeButton" to="." method="_on_change_button_pressed"]
-[connection signal="pressed" from="CenterContainer/MainVBox/BottomBar/UndoButton" to="." method="_on_undo_pressed"]
-[connection signal="pressed" from="CenterContainer/MainVBox/BottomBar/HintButton" to="." method="_on_hint_pressed"]
-[connection signal="pressed" from="CenterContainer/MainVBox/BottomBar/EraseButton" to="." method="_on_erase_pressed"]
+[connection signal="pressed" from="RootCenter/MainVBox/TopBar/HBox/BackButton" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="RootCenter/MainVBox/GameArea/PetPanel/OverlayMargin/PetVBox/PetButtons/PetButton" to="." method="_on_pet_button_pressed"]
+[connection signal="pressed" from="RootCenter/MainVBox/GameArea/PetPanel/OverlayMargin/PetVBox/PetButtons/FeedButton" to="." method="_on_feed_button_pressed"]
+[connection signal="pressed" from="RootCenter/MainVBox/GameArea/PetPanel/OverlayMargin/PetVBox/PetButtons/ChangeButton" to="." method="_on_change_button_pressed"]
+[connection signal="pressed" from="RootCenter/MainVBox/BottomBar/UndoButton" to="." method="_on_undo_pressed"]
+[connection signal="pressed" from="RootCenter/MainVBox/BottomBar/HintButton" to="." method="_on_hint_pressed"]
+[connection signal="pressed" from="RootCenter/MainVBox/BottomBar/EraseButton" to="." method="_on_erase_pressed"]
 [connection signal="pressed" from="WinPopup/WinPanel/VBox/ContinueButton" to="." method="_on_continue_pressed"]

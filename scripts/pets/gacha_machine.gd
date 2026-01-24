@@ -36,24 +36,60 @@ func pull(player_progress: PlayerProgress, collection: PetCollection) -> Diction
 	# Create pet
 	var pet := Pet.create(species, rarity)
 	
-	# Handle duplicates (bonus XP instead of new pet)
+	# Handle duplicates - absorption mechanics
 	var is_duplicate := collection.has_species(species)
 	var events: Array[DomainEvent] = []
 	
 	if is_duplicate:
-		# Find existing pet and give bonus XP
-		for existing_pet in collection.pets:
-			if existing_pet.species_id == species:
-				var level_events := existing_pet.add_xp(50 * (rarity + 1))
-				events.append_array(level_events)
-				break
+		# Get existing pet of this species
+		var existing_pet: Pet = collection.get_pet_by_species(species)
+		
+		# Determine rewards based on duplicate rarity
+		var shard_amount: int = 1
+		var gold_refund: int = 25  # Base gold refund
+		var xp_reward: int = 20    # Base XP reward
+		
+		# Scale rewards by rarity
+		match rarity:
+			PetRarity.Tier.UNCOMMON:
+				gold_refund = 35
+				xp_reward = 30
+			PetRarity.Tier.RARE:
+				shard_amount = 2
+				gold_refund = 50
+				xp_reward = 50
+			PetRarity.Tier.EPIC:
+				shard_amount = 3
+				gold_refund = 75
+				xp_reward = 80
+			PetRarity.Tier.LEGENDARY:
+				shard_amount = 5
+				gold_refund = 100
+				xp_reward = 120
+		
+		# Rarity upgrade: if duplicate is higher rarity, upgrade existing pet
+		var rarity_upgraded: bool = false
+		if existing_pet and rarity > existing_pet.rarity:
+			existing_pet.rarity = rarity
+			rarity_upgraded = true
+		
+		# Award rewards
+		collection.add_shards(species, shard_amount)
+		player_progress.add_gold(gold_refund)
+		
+		# Award XP to existing pet
+		if existing_pet:
+			existing_pet.add_xp(xp_reward)
 		
 		return {
 			"success": true,
 			"is_duplicate": true,
 			"species": species,
 			"rarity": rarity,
-			"bonus_xp": 50 * (rarity + 1),
+			"shard_amount": shard_amount,
+			"gold_refund": gold_refund,
+			"xp_reward": xp_reward,
+			"rarity_upgraded": rarity_upgraded,
 			"events": events
 		}
 	else:
@@ -65,8 +101,11 @@ func pull(player_progress: PlayerProgress, collection: PetCollection) -> Diction
 			"success": true,
 			"is_duplicate": false,
 			"pet": pet,
+			"species": species,
+			"rarity": rarity,
 			"events": events
 		}
+
 
 
 ## Roll for rarity with pity system

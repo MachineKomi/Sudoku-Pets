@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://brd33raborkhj"
-path="res://.godot/imported/gem_7_Large.png-aa3d1d45674e0b9d901d3c92647c96d8.ctex"
+uid="uid://cj3obn854okcd"
+path="res://.godot/imported/gem_1_glowing.png-f781a36e3374e268a41137b394cb2b5e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/gems/gem_7_Large.png"
-dest_files=["res://.godot/imported/gem_7_Large.png-aa3d1d45674e0b9d901d3c92647c96d8.ctex"]
+source_file="res://assets/sprites/gems/Archived/gem_1_glowing.png"
+dest_files=["res://.godot/imported/gem_1_glowing.png-f781a36e3374e268a41137b394cb2b5e.ctex"]
 
 [params]
 

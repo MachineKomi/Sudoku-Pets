@@ -2,6 +2,20 @@
 
 [ext_resource type="Script" path="res://scenes/pets/pet_screen.gd" id="1_pets"]
 
+[sub_resource type="StyleBoxFlat" id="menu_panel_style"]
+bg_color = Color(1, 1, 1, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.95, 0.9, 0.92, 1)
+corner_radius_top_left = 15
+corner_radius_top_right = 15
+corner_radius_bottom_right = 15
+corner_radius_bottom_left = 15
+shadow_color = Color(0.6, 0.4, 0.5, 0.1)
+shadow_size = 10
+
 [node name="PetScreen" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -14,7 +28,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.15, 0.12, 0.2, 1)
+color = Color(0.96, 0.98, 0.99, 1)
 
 [node name="CenterContainer" type="CenterContainer" parent="."]
 layout_mode = 1
@@ -42,6 +56,7 @@ size_flags_horizontal = 3
 [node name="Title" type="Label" parent="CenterContainer/MainVBox/TopBar"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.3, 0.2, 0.4, 1)
 text = "🐱 My Pets"
 
 [node name="Spacer2" type="Control" parent="CenterContainer/MainVBox/TopBar"]
@@ -51,6 +66,7 @@ size_flags_horizontal = 3
 [node name="GoldLabel" type="Label" parent="CenterContainer/MainVBox/TopBar"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.6, 0.45, 0.1, 1)
 text = "🪙 100"
 
 [node name="ContentHBox" type="HBoxContainer" parent="CenterContainer/MainVBox"]
@@ -60,6 +76,7 @@ theme_override_constants/separation = 40
 [node name="GachaPanel" type="PanelContainer" parent="CenterContainer/MainVBox/ContentHBox"]
 custom_minimum_size = Vector2(300, 450)
 layout_mode = 2
+theme_override_styles/panel = SubResource("menu_panel_style")
 
 [node name="GachaVBox" type="VBoxContainer" parent="CenterContainer/MainVBox/ContentHBox/GachaPanel"]
 layout_mode = 2
@@ -69,6 +86,7 @@ alignment = 1
 [node name="GachaTitle" type="Label" parent="CenterContainer/MainVBox/ContentHBox/GachaPanel/GachaVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.3, 0.2, 0.4, 1)
 text = "🎰 Gacha Machine"
 horizontal_alignment = 1
 
@@ -102,12 +120,14 @@ show_percentage = false
 [node name="PityLabel" type="Label" parent="CenterContainer/MainVBox/ContentHBox/GachaPanel/GachaVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.4, 0.4, 0.5, 1)
 text = "Pity: 0/10"
 horizontal_alignment = 1
 
 [node name="CollectionPanel" type="PanelContainer" parent="CenterContainer/MainVBox/ContentHBox"]
 custom_minimum_size = Vector2(350, 450)
 layout_mode = 2
+theme_override_styles/panel = SubResource("menu_panel_style")
 
 [node name="CollectionVBox" type="VBoxContainer" parent="CenterContainer/MainVBox/ContentHBox/CollectionPanel"]
 layout_mode = 2
@@ -116,6 +136,7 @@ theme_override_constants/separation = 12
 [node name="CollectionTitle" type="Label" parent="CenterContainer/MainVBox/ContentHBox/CollectionPanel/CollectionVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.3, 0.2, 0.4, 1)
 text = "📦 Collection"
 horizontal_alignment = 1
 
@@ -169,6 +190,12 @@ theme_override_font_sizes/font_size = 18
 text = "Level 1 (XP: 0/50)"
 horizontal_alignment = 1
 
+[node name="ShardLabel" type="Label" parent="PetDetailPopup/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.6, 0.8, 1)
+text = "Shards: 0"
+horizontal_alignment = 1
+
 [node name="HappinessLabel" type="Label" parent="PetDetailPopup/VBox"]
 layout_mode = 2
 text = "Happiness"
@@ -189,6 +216,11 @@ custom_minimum_size = Vector2(100, 40)
 layout_mode = 2
 text = "🍎 Feed"
 
+[node name="TrainButton" type="Button" parent="PetDetailPopup/VBox/ButtonRow"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+text = "⚔️ Train"
+
 [node name="PlayButton" type="Button" parent="PetDetailPopup/VBox/ButtonRow"]
 custom_minimum_size = Vector2(100, 40)
 layout_mode = 2
@@ -201,5 +233,6 @@ text = "✕ Close"
 [connection signal="pressed" from="CenterContainer/MainVBox/TopBar/BackButton" to="." method="_on_back_pressed"]
 [connection signal="pressed" from="CenterContainer/MainVBox/ContentHBox/GachaPanel/GachaVBox/PullButton" to="." method="_on_pull_pressed"]
 [connection signal="pressed" from="PetDetailPopup/VBox/ButtonRow/FeedButton" to="." method="_on_feed_pressed"]
+[connection signal="pressed" from="PetDetailPopup/VBox/ButtonRow/TrainButton" to="." method="_on_train_pressed"]
 [connection signal="pressed" from="PetDetailPopup/VBox/ButtonRow/PlayButton" to="." method="_on_play_pressed"]
 [connection signal="pressed" from="PetDetailPopup/VBox/CloseButton" to="." method="_on_close_detail_pressed"]

@@ -21,6 +21,22 @@ const BIOME_COLORS: Dictionary = {
 const LEVELS_PER_BIOME: int = 10
 const TOTAL_LEVELS: int = 50
 
+## LV-2: Board size for each level (1-50)
+## More 4x4 early, scaling to larger boards later
+## Note: Valid sizes are 4, 6, 9, 10 (no 8x8 in PuzzleData)
+const LEVEL_BOARD_SIZES: Dictionary = {
+	# Meadow (1-10): Mostly 4x4, some 6x6
+	1: 4, 2: 4, 3: 4, 4: 4, 5: 4, 6: 6, 7: 4, 8: 6, 9: 4, 10: 6,
+	# Beach (11-20): Mix of 4x4, 6x6, first 9x9
+	11: 4, 12: 6, 13: 4, 14: 6, 15: 6, 16: 9, 17: 4, 18: 6, 19: 9, 20: 6,
+	# Forest (21-30): More 6x6, 9x9
+	21: 6, 22: 6, 23: 9, 24: 6, 25: 9, 26: 9, 27: 6, 28: 9, 29: 9, 30: 9,
+	# Mountain (31-40): 6x6, 9x9, 10x10
+	31: 6, 32: 9, 33: 9, 34: 9, 35: 9, 36: 9, 37: 10, 38: 9, 39: 9, 40: 10,
+	# Cloud (41-50): Large boards - 9x9, 10x10
+	41: 9, 42: 9, 43: 9, 44: 10, 45: 9, 46: 10, 47: 9, 48: 10, 49: 10, 50: 10,
+}
+
 
 
 # =============================================================================
@@ -70,11 +86,21 @@ func _load_player_progress() -> void:
 		_player_progress.gold = 100  # Starting gold
 	else:
 		_player_progress = PlayerProgress.from_dict(saved_data)
+	
+	# Sync from legacy 'player_gold' key if it exists and is different
+	var legacy_gold: int = SaveManager.get_value("player_gold", _player_progress.gold)
+	if legacy_gold != _player_progress.gold:
+		# Use the higher value to avoid losing gold
+		_player_progress.gold = maxi(legacy_gold, _player_progress.gold)
+
 
 
 func _save_player_progress() -> void:
 	SaveManager.set_value("player_progress", _player_progress.to_dict())
+	# Sync gold to the legacy 'player_gold' key for other screens
+	SaveManager.set_value("player_gold", _player_progress.gold)
 	SaveManager.save_game()
+
 
 
 # =============================================================================
@@ -153,7 +179,8 @@ func _add_biome_header(biome: String, start_level: int) -> void:
 
 func _create_level_node(level_id: int) -> Control:
 	"""Create a single level node with lock/unlock/stars display"""
-	var is_unlocked: bool = level_id <= _player_progress.highest_unlocked_level
+	var is_unlocked: bool = true  # LV-1: All levels unlocked for testing
+
 	var stars: int = _player_progress.level_stars.get(level_id, 0)
 	var biome: String = _get_biome_for_level(level_id)
 	
@@ -218,6 +245,16 @@ func _create_level_node(level_id: int) -> Control:
 		stars_label.add_theme_font_size_override("font_size", 16)
 		stars_label.add_theme_color_override("font_color", Color("#FFD700") if stars > 0 else Color(0.5, 0.5, 0.5))
 		vbox.add_child(stars_label)
+		
+		# LV-3: Board size label
+		var board_size: int = LEVEL_BOARD_SIZES.get(level_id, 4)
+		var size_label := Label.new()
+		size_label.text = "%d×%d" % [board_size, board_size]
+		size_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		size_label.add_theme_font_size_override("font_size", 12)
+		size_label.add_theme_color_override("font_color", Color(0.4, 0.35, 0.5))
+		vbox.add_child(size_label)
+
 	
 	row.add_child(vbox)
 	
@@ -301,14 +338,15 @@ func _on_play_breezy_pressed() -> void:
 	if _selected_level > 0:
 		SaveManager.set_value("current_level_id", _selected_level)
 		SaveManager.set_value("current_difficulty", "breezy")
+		SaveManager.set_value("current_board_size", LEVEL_BOARD_SIZES.get(_selected_level, 4))
 		get_tree().change_scene_to_file("res://scenes/puzzle/puzzle_screen.tscn")
 
 
 func _on_play_normal_pressed() -> void:
 	if _selected_level > 0:
-		# Store selected level for puzzle screen to load
 		SaveManager.set_value("current_level_id", _selected_level)
 		SaveManager.set_value("current_difficulty", "normal")
+		SaveManager.set_value("current_board_size", LEVEL_BOARD_SIZES.get(_selected_level, 4))
 		get_tree().change_scene_to_file("res://scenes/puzzle/puzzle_screen.tscn")
 
 
@@ -316,7 +354,9 @@ func _on_play_hard_pressed() -> void:
 	if _selected_level > 0:
 		SaveManager.set_value("current_level_id", _selected_level)
 		SaveManager.set_value("current_difficulty", "hard")
+		SaveManager.set_value("current_board_size", LEVEL_BOARD_SIZES.get(_selected_level, 4))
 		get_tree().change_scene_to_file("res://scenes/puzzle/puzzle_screen.tscn")
+
 
 
 func _on_close_popup_pressed() -> void:

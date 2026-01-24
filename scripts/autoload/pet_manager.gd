@@ -1,59 +1,67 @@
-## PetManager - Manages pet collection and active companion
-## NOTE: No class_name for autoloads - Godot registers them by their autoload name
+## PetManager - Stores persistent state for pets using PetCollection
 extends Node
 
-signal pet_obtained(pet_data: PetData)
-signal pet_leveled_up(pet_data: PetData, new_level: int)
-signal active_pet_changed(pet_data: PetData)
+signal collection_updated
+signal active_pet_changed(pet: Pet)
+signal pet_leveled_up(pet: Pet)
 
-var owned_pets: Array[PetInstance] = []
-var active_pet: PetInstance = null
-
+var collection: PetCollection
 
 func _ready() -> void:
-	pass  # Will load from SaveManager
+	_load()
+
+func _load() -> void:
+	var data: Dictionary = SaveManager.get_value("pet_collection", {})
+	if data.is_empty():
+		collection = PetCollection.new()
+		# Add a starter pet for new players
+		var starter = Pet.new()
+		starter.id = "starter_bunny"
+		starter.species_id = "bunny"
+		starter.nickname = "Fluffy"
+		starter.rarity = PetRarity.Tier.COMMON
+		starter.level = 1
+		starter.current_xp = 0
+		starter.happiness = 100
+		collection.add_pet(starter)
+		collection.set_active_pet(starter.id)
+		save()
+	else:
+		collection = PetCollection.from_dict(data)
 
 
-func add_pet(pet_data: PetData) -> PetInstance:
-	var instance := PetInstance.new()
-	instance.base_data = pet_data
-	instance.level = 1
-	instance.xp = 0
-	instance.id = _generate_pet_id()
-	
-	owned_pets.append(instance)
-	pet_obtained.emit(pet_data)
-	
-	# If no active pet, make this one active
-	if active_pet == null:
-		set_active_pet(instance)
-	
-	return instance
+func save() -> void:
+	SaveManager.set_value("pet_collection", collection.to_dict())
+	SaveManager.save_game()
 
+func get_active_pet() -> Pet:
+	return collection.get_active_pet()
 
-func set_active_pet(pet: PetInstance) -> void:
-	active_pet = pet
-	active_pet_changed.emit(pet.base_data if pet else null)
+func set_active_pet(pet_id: String) -> void:
+	if collection.set_active_pet(pet_id):
+		save()
+		active_pet_changed.emit(collection.get_active_pet())
 
+## Delegate methods to collection
+func add_pet(pet: Pet) -> void:
+	collection.add_pet(pet)
+	save()
+	collection_updated.emit()
 
-func add_xp_to_active_pet(amount: int) -> void:
-	if active_pet == null:
-		return
-	
-	active_pet.xp += amount
-	var xp_needed := _xp_for_level(active_pet.level + 1)
-	
-	while active_pet.xp >= xp_needed:
-		active_pet.xp -= xp_needed
-		active_pet.level += 1
-		pet_leveled_up.emit(active_pet.base_data, active_pet.level)
-		xp_needed = _xp_for_level(active_pet.level + 1)
+func add_shards(species: String, amount: int) -> void:
+	collection.add_shards(species, amount)
+	save()
+	collection_updated.emit()
 
+func get_shards(species: String) -> int:
+	return collection.get_shards(species)
 
-func _xp_for_level(level: int) -> int:
-	# Simple curve: 100 XP for level 2, scaling up
-	return int(100 * pow(1.2, level - 1))
+func spend_shards(species: String, amount: int) -> bool:
+	if collection.spend_shards(species, amount):
+		save()
+		collection_updated.emit()
+		return true
+	return false
 
-
-func _generate_pet_id() -> String:
-	return str(Time.get_unix_time_from_system()) + "_" + str(randi())
+func get_all_pets() -> Array[Pet]:
+	return collection.pets
